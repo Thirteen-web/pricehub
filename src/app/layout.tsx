@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import LayoutKontejner from './LayoutKontejner';
+import { Providers } from './providers'; // <--- Vraćamo uvoz tvog provajdera za teme
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -18,10 +19,12 @@ export default function RootLayout({
   return (
     <html lang="hr" suppressHydrationWarning>
       <body className={inter.className}>
-        {/* LayoutKontejner unutar sebe pametno upravlja i Sidebarom i mobilnim zaglavljem */}
-        <LayoutKontejner>
-          {children}
-        </LayoutKontejner>
+        {/* Omotavamo aplikaciju u Providers kako bi gumb za tamni mod odmah proradio */}
+        <Providers>
+          <LayoutKontejner>
+            {children}
+          </LayoutKontejner>
+        </Providers>
       </body>
     </html>
   );

@@ -245,9 +245,9 @@ export default function Sidebar({ onAction }: { onAction?: () => void }) {
   };
 
   return (
-    <div className="h-full flex flex-col p-4 mt-2 pb-12 select-none">
-      {/* NAVIGACIJSKI LINKOVI */}
+    <div className="h-[calc(100vh-60px)] md:h-[calc(100vh-80px)] flex flex-col justify-between p-4 pb-8 select-none overflow-y-auto">
       <nav className="flex-1 space-y-2">
+        
         <Link href="/" className={dobiStilGumba('/')}>
           <DocumentTextIcon className={dobiStilIkone('/')} />
           Digitalni cjenik

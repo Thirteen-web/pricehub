@@ -31,11 +31,11 @@ export default function LayoutKontejner({ children }: { children: React.ReactNod
         </button>
       </header>
 
-      {/* 2. BOČNA TRAKA (SIDEBAR): Na laptopu fiksna i otvorena, na mobitelu se uvozi kao overlay */}
+         {/* 2. BOČNA TRAKA (SIDEBAR): POPRAVLJENA VISINA PROTIV REZANJA GUMBA */}
       <aside 
         className={`
-          fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-900 border-r border-gray-200/80 dark:border-gray-800/80 h-screen 
-          transition-transform duration-300 ease-in-out
+          fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-900 border-r border-gray-200/80 dark:border-gray-800/80
+          transition-transform duration-300 ease-in-out h-full min-h-screen
           md:sticky md:top-0 md:transform-none md:translate-x-0
           ${sidebarOtvoren ? 'translate-x-0' : '-translate-x-full'}
         `}
