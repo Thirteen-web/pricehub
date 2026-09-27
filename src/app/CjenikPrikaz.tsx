@@ -246,19 +246,22 @@ export default function CjenikPrikaz({ pocetniArtikli, grupe, firma }: CjenikPri
                   {/* 7. Ćelija: Stupac s akcijama i ugrađenim Kebab izbornikom (3 točkice) */}
                   <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium align-middle relative">
                     
-                    {/* LAPTOP PRIKAZ */}
-                    <div className="hidden md:flex items-center justify-end gap-2">
-                      <button
+                     {/* RAČUNALNI PRIKAZ: Usklađeni gumbi sa stilom grupa proizvoda */}
+                    <div className="hidden md:flex items-center justify-end gap-2 select-none">
+                      {/* Gumb Uredi: Plavi stil s nježnom pozadinom i jasnim tekstom */}
+                         <button
                         onClick={() => otvoriModal('uredi', artikl)}
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition-colors"
-                        title="Uredi"
+                        className="p-2.5 bg-gray-50 hover:bg-blue-100 dark:bg-gray-800 dark:hover:bg-blue-900/60 border border-gray-100 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 rounded-lg shadow-sm hover:shadow-md hover:shadow-blue-200/60 dark:hover:shadow-blue-900/40 transition-all duration-200 active:scale-[0.97] text-base"
+                        title="Uredi artikl"
                       >
                         ✏️
                       </button>
+
+                      {/* Obriši gumb (🗑️) - POPRAVLJEN OBRUB: Dodan dark:border-gray-700 i pojačan crveni rub na hover */}
                       <button
                         onClick={() => otvoriModal('obriši', artikl)}
-                        className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
-                        title="Obriši"
+                        className="p-2.5 bg-gray-50 hover:bg-red-100 dark:bg-gray-800 dark:hover:bg-red-900/60 border border-gray-100 dark:border-gray-700 hover:border-red-500 dark:hover:border-red-500 rounded-lg shadow-sm hover:shadow-md hover:shadow-red-200/60 dark:hover:shadow-red-900/40 transition-all duration-200 active:scale-[0.97] text-base"
+                        title="Obriši artikl"
                       >
                         🗑️
                       </button>
@@ -276,36 +279,36 @@ export default function CjenikPrikaz({ pocetniArtikli, grupe, firma }: CjenikPri
                         •••
                       </button>
 
-                     {/* Plutajući mini-prozorčić (Dropdown) - SADA MAKSIMALNO OPTIMIZIRAN ZA PRST */}
+                     {/* Plutajući mini-prozorčić (Dropdown) sa stilom grupa proizvoda */}
                         {otvoreniMeniArtiklId === artikl.id && (
                           <>
                             <div className="fixed inset-0 z-10" onClick={() => setOtvoreniMeniArtiklId(null)} />
                             
-                            {/* Proširen prozorčić s w-28 na w-36 radi više mjesta */}
-                            <div className="absolute right-2 mt-2 w-36 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-20 overflow-hidden divide-y divide-gray-100 dark:divide-gray-800 flex flex-col">
+                            {/* Prostrana kućica izbornika s dodatnim unutarnjim razmakom p-2 */}
+                            <div className="absolute right-2 mt-2 w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-20 p-2 flex flex-col gap-1.5 animate-in fade-in zoom-in-95 duration-100">
                               
-                              {/* Gumb Uredi: Podignut font na text-sm i vertikalni padding na py-3 za lakši dodir */}
+                              {/* Gumb Uredi: Plavi stil s nježnom pozadinom, idealan za dodir prsta */}
                               <button
                                 onClick={() => {
                                   setOtvoreniMeniArtiklId(null);
                                   otvoriModal('uredi', artikl);
                                 }}
-                                className="px-4 py-3 text-sm text-left font-semibold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 flex items-center gap-2.5 transition-colors active:bg-blue-100/50"
+                                className="w-full px-3.5 py-3 text-sm font-bold text-left rounded-xl bg-blue-50/80 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-all flex items-center gap-2.5 active:scale-[0.97]"
                               >
-                                <span className="text-base">✏️</span> 
-                                <span>Uredi</span>
+                                <span className="text-base">✏️</span>
+                                <span>Uredi artikl</span>
                               </button>
                               
-                              {/* Gumb Obriši: Prostran i lako uočljiv za palac */}
+                              {/* Gumb Obriši: Crveni stil s blagim upozoravajućim tonovima */}
                               <button
                                 onClick={() => {
                                   setOtvoreniMeniArtiklId(null);
                                   otvoriModal('obriši', artikl);
                                 }}
-                                className="px-4 py-3 text-sm text-left font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-2.5 transition-colors active:bg-red-100/50"
+                                className="w-full px-3.5 py-3 text-sm font-bold text-left rounded-xl bg-red-50/80 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/60 transition-all flex items-center gap-2.5 active:scale-[0.97]"
                               >
-                                <span className="text-base">🗑️</span> 
-                                <span>Obriši</span>
+                                <span className="text-base">🗑️</span>
+                                <span>Obriši artikl</span>
                               </button>
 
                             </div>
