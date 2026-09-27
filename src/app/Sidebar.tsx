@@ -16,7 +16,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 // OVA LINIJA JE BILA POKVARENA/IZBRISANA – SADA JE ISPRAVLJENA:
-export default function Sidebar() {
+export default function Sidebar({ onAction }: { onAction?: () => void }) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
