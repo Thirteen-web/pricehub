@@ -276,31 +276,41 @@ export default function CjenikPrikaz({ pocetniArtikli, grupe, firma }: CjenikPri
                         •••
                       </button>
 
-                      {otvoreniMeniArtiklId === artikl.id && (
-                        <>
-                          <div className="fixed inset-0 z-10" onClick={() => setOtvoreniMeniArtiklId(null)} />
-                          <div className="absolute right-2 mt-1 w-28 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl z-20 overflow-hidden divide-y divide-gray-100 dark:divide-gray-800 flex flex-col">
-                            <button
-                              onClick={() => {
-                                setOtvoreniMeniArtiklId(null);
-                                otvoriModal('uredi', artikl);
-                              }}
-                              className="px-4 py-2.5 text-xs text-left font-semibold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 flex items-center gap-2"
-                            >
-                              ✏️ Uredi
-                            </button>
-                            <button
-                              onClick={() => {
-                                setOtvoreniMeniArtiklId(null);
-                                otvoriModal('obriši', artikl);
-                              }}
-                              className="px-4 py-2.5 text-xs text-left font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-2"
-                            >
-                              🗑️ Obriši
-                            </button>
-                          </div>
-                        </>
-                      )}
+                     {/* Plutajući mini-prozorčić (Dropdown) - SADA MAKSIMALNO OPTIMIZIRAN ZA PRST */}
+                        {otvoreniMeniArtiklId === artikl.id && (
+                          <>
+                            <div className="fixed inset-0 z-10" onClick={() => setOtvoreniMeniArtiklId(null)} />
+                            
+                            {/* Proširen prozorčić s w-28 na w-36 radi više mjesta */}
+                            <div className="absolute right-2 mt-2 w-36 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-20 overflow-hidden divide-y divide-gray-100 dark:divide-gray-800 flex flex-col">
+                              
+                              {/* Gumb Uredi: Podignut font na text-sm i vertikalni padding na py-3 za lakši dodir */}
+                              <button
+                                onClick={() => {
+                                  setOtvoreniMeniArtiklId(null);
+                                  otvoriModal('uredi', artikl);
+                                }}
+                                className="px-4 py-3 text-sm text-left font-semibold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 flex items-center gap-2.5 transition-colors active:bg-blue-100/50"
+                              >
+                                <span className="text-base">✏️</span> 
+                                <span>Uredi</span>
+                              </button>
+                              
+                              {/* Gumb Obriši: Prostran i lako uočljiv za palac */}
+                              <button
+                                onClick={() => {
+                                  setOtvoreniMeniArtiklId(null);
+                                  otvoriModal('obriši', artikl);
+                                }}
+                                className="px-4 py-3 text-sm text-left font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-2.5 transition-colors active:bg-red-100/50"
+                              >
+                                <span className="text-base">🗑️</span> 
+                                <span>Obriši</span>
+                              </button>
+
+                            </div>
+                          </>
+                        )}
                     </div>
 
                   </td>
