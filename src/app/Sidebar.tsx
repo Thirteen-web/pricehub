@@ -247,18 +247,18 @@ export default function Sidebar({ onAction }: { onAction?: () => void }) {
   return (
     <div className="h-[calc(100vh-60px)] md:h-[calc(100vh-80px)] flex flex-col justify-between p-4 pb-8 select-none overflow-y-auto">
       <nav className="flex-1 space-y-2">
-        
-        <Link href="/" className={dobiStilGumba('/')}>
+
+        <Link href="/" onClick={onAction}  className={dobiStilGumba('/')}>
           <DocumentTextIcon className={dobiStilIkone('/')} />
           Digitalni cjenik
         </Link>
 
-        <Link href="/grupe" className={dobiStilGumba('/grupe')}>
+        <Link href="/grupe" onClick={onAction} className={dobiStilGumba('/grupe')}>
           <FolderIcon className={dobiStilIkone('/grupe')} />
           Grupe proizvoda
         </Link>
 
-        <Link href="/postavke" className={dobiStilGumba('/postavke')}>
+        <Link href="/postavke" onClick={onAction} className={dobiStilGumba('/postavke')}>
           <Cog6ToothIcon className={dobiStilIkone('/postavke')} />
           Opcije sustava
         </Link>
@@ -267,8 +267,14 @@ export default function Sidebar({ onAction }: { onAction?: () => void }) {
         <div className="pt-4 border-t border-gray-100 dark:border-gray-800 mt-4 space-y-1">
           <p className="px-4 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Izvještaji</p>
           
-          <button 
-            onClick={pokreniGeneriranjePdfa}
+              <button 
+            onClick={(e) => {
+              // 1. Ako postoji funkcija zatvaranja (na mobitelu), zatvori izbornik odmah
+              if (onAction) onAction(); 
+              
+              // 2. Pokreni generiranje i otvaranje čistog PDF cjenika
+              pokreniGeneriranjePdfa(e);
+            }}
             disabled={generiramPdf}
             className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-200 group w-full text-left disabled:opacity-50"
           >
