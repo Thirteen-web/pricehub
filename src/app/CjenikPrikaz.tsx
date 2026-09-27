@@ -28,6 +28,8 @@ export default function CjenikPrikaz({ pocetniArtikli, grupe, firma }: CjenikPri
   // STANJA ZA PAGINACIJU (Stranice od po 10 artikala)
   const [trenutnaStranica, setTrenutnaStranica] = useState(1);
   const maxStavkiPoStranici = 10;
+    // Stanje za praćenje otvorenog mobilnog mini-izbornika s tri točkice
+  const [otvoreniMeniArtiklId, setOtvoreniMeniArtiklId] = useState<number | null>(null);
 
   // STANJA ZA MODAL
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -191,11 +193,15 @@ export default function CjenikPrikaz({ pocetniArtikli, grupe, firma }: CjenikPri
             <thead className="bg-gray-50/70 dark:bg-gray-800/50 divide-y divide-gray-100 dark:divide-gray-800">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Naziv artikla</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Naziv grupe</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Normativ</th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">Sidrena cijena</th>
+                
+                <th className="px-6 py-4 hidden md:table-cell text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Naziv grupe</th>
+                <th className="px-6 py-4 hidden md:table-cell text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Normativ</th>
+                <th className="px-6 py-4 hidden md:table-cell text-right text-xs font-bold text-gray-400 uppercase tracking-wider">Sidrena cijena</th>
+
                 <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">Trenutna cijena</th>
-                <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-wider w-36">Datum primjene</th>
+
+                <th className="px-6 py-4 hidden md:table-cell text-center text-xs font-bold text-gray-400 uppercase tracking-wider w-36">Datum primjene</th>
+
                 <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">Akcije</th>
               </tr>
             </thead>
@@ -206,7 +212,7 @@ export default function CjenikPrikaz({ pocetniArtikli, grupe, firma }: CjenikPri
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800 dark:text-gray-200 font-semibold">
                     {artikl.naziv}
                   </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                <td className="px-6 py-4 hidden md:table-cell whitespace-nowrap text-sm">
   {(() => {
     const nazivGrupe = artikl.grupe?.naziv?.toLowerCase() || '';
     
@@ -235,17 +241,17 @@ export default function CjenikPrikaz({ pocetniArtikli, grupe, firma }: CjenikPri
     );
   })()}
 </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
+                  <td className="px-6 py-4 hidden md:table-cell whitespace-nowrap text-sm text-gray-500 font-medium">
                     {artikl.normativ ? <span className="italic text-gray-400">{artikl.normativ}</span> : <span className="text-gray-300">-</span>}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-400 font-medium tabular-nums">
+                  <td className="px-6 py-4 hidden md:table-cell whitespace-nowrap text-sm text-right text-gray-400 font-medium tabular-nums">
                     {artikl.sidrena_cijena !== null && artikl.sidrena_cijena !== undefined ? `${Number(artikl.sidrena_cijena).toFixed(2)} €` : <span className="text-gray-300">-</span>}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-right ext-gray-900 dark:text-gray-100 font-bold tabular-nums">
                     {Number(artikl.cijena).toFixed(2)} €
                   </td>
                   {/* NOVI DD.MM.YYYY PRIKAZ DATUMA PRIMJENE U TABLICI */}
-<td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500 font-medium font-mono">
+<td className="px-6 py-4 hidden md:table-cell whitespace-nowrap text-sm text-center text-gray-500 font-medium font-mono">
   {artikl.datum_unosa ? (
     new Date(artikl.datum_unosa).toLocaleDateString('hr-HR', {
       day: '2-digit',
@@ -256,24 +262,70 @@ export default function CjenikPrikaz({ pocetniArtikli, grupe, firma }: CjenikPri
     <span className="text-gray-300">-</span>
   )}
 </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-medium">
-                    <div className="flex justify-center gap-2">
-                      <button
-                        onClick={() => otvoriModal('uredi', artikl)}
-                        className="p-1.5 text-gray-400 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 border border-gray-100 rounded-md transition-all"
-                        title="Uredi artikl"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        onClick={() => otvoriModal('obriši', artikl)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 border border-gray-100 rounded-md transition-all"
-                        title="Obriši artikl"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </td>
+                   {/* STUPAC S AKCIJAMA: Pametni izbornik s 3 točkice za mobitele */}
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium align-middle relative">
+                      
+                      {/* RAČUNALO / LAPTOP: Standardni, odmah vidljivi gumbi */}
+                      <div className="hidden md:flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => otvoriModal('uredi', artikl)}
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition-colors"
+                          title="Uredi"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => otvoriModal('obriši', artikl)}
+                          className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
+                          title="Obriši"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+
+                      {/* MOBITEL: Kompaktni gumb s 3 točkice i plutajućim izbornikom */}
+                      <div className="md:hidden inline-block text-left">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOtvoreniMeniArtiklId(otvoreniMeniArtiklId === artikl.id ? null : artikl.id);
+                          }}
+                          className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700/60 font-bold transition-all active:scale-95"
+                        >
+                          •••
+                        </button>
+
+                        {/* Plutajući mini-prozorčić (Dropdown) koji izlazi na klik */}
+                        {otvoreniMeniArtiklId === artikl.id && (
+                          <>
+                            {/* Nevidljivi štit koji zatvara izbornik ako klikneš bilo gdje izvan njega */}
+                            <div className="fixed inset-0 z-10" onClick={() => setOtvoreniMeniArtiklId(null)} />
+                            
+                            <div className="absolute right-6 mt-1 w-28 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl z-20 overflow-hidden divide-y divide-gray-100 dark:divide-gray-800 flex flex-col">
+                              <button
+                                onClick={() => {
+                                  setOtvoreniMeniArtiklId(null);
+                                  otvoriModal('uredi', artikl);
+                                }}
+                                className="px-4 py-2.5 text-xs text-left font-semibold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 flex items-center gap-2"
+                              >
+                                ✏️ Uredi
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setOtvoreniMeniArtiklId(null);
+                                  otvoriModal('obriši', artikl);
+                                }}
+                                className="px-4 py-2.5 text-xs text-left font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-2"
+                              >
+                                🗑️ Obriši
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                    </td>
                 </tr>
               ))}
             </tbody>
