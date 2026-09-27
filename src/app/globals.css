@@ -1,0 +1,65 @@
+@import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@media print {
+  /* 1. Sakrij fiksni gornji header i lijevu bočnu traku (Sidebar) */
+  header, 
+  aside,
+  nav,
+  button,
+  select,
+  input,
+  .fixed,
+  a {
+    display: none !important;
+  }
+
+  /* 2. Resetiraj margine radnog prostora da tablica sjedne na čisti papir */
+  body, 
+  main, 
+  div {
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    max-w: 100% !important;
+  }
+
+  /* 3. Prisili tablicu da se raširi od ruba do ruba A4 papira */
+  .min-w-full {
+    width: 100% !important;
+    display: table !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+  }
+}
