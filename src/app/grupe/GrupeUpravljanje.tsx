@@ -17,6 +17,8 @@ export default function GrupeUpravljanje({ pocetneGrupe }: GrupeUpravljanjeProps
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'dodaj' | 'uredi' | 'obriši'>('dodaj');
   const [odabranaGrupa, setOdabranaGrupa] = useState<Grupe | null>(null);
+  // Stanje za praćenje otvorenog mobilnog izbornika s tri točkice u tablici grupa
+  const [otvoreniMeniGrupaId, setOtvoreniMeniGrupaId] = useState<number | null>(null);
 
   const otvoriModal = (mode: 'dodaj' | 'uredi' | 'obriši', grupa: Grupe | null = null) => {
     setModalMode(mode);
@@ -86,13 +88,22 @@ export default function GrupeUpravljanje({ pocetneGrupe }: GrupeUpravljanjeProps
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800 transition-colors">
-              {pocetneGrupe.map((grupa) => (
+                            {pocetneGrupe.map((grupa) => (
                 <tr key={grupa.id} className="hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition-colors group">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400 dark:text-gray-500 font-mono font-bold">#{grupa.id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{grupa.naziv}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
-                    <div className="flex justify-end gap-2">
-                     <button
+                  {/* Smanjen padding na px-2 za mobitele radi uštede prostora */}
+                  <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-400 dark:text-gray-500 font-mono font-bold">
+                    #{grupa.id}
+                  </td>
+                  <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    {grupa.naziv}
+                  </td>
+                  
+                  {/* STUPAC S AKCIJAMA: Usklađen padding i dodan Kebab meni za mobitele */}
+                  <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-right font-medium align-middle relative">
+                    
+                    {/* 🖥️ PRIKAZ ZA RAČUNALO/LAPTOP: Tvoji ulašteni i prilagođeni gumbi */}
+                    <div className="hidden md:flex justify-end gap-2">
+                      <button
                         onClick={() => otvoriModal('uredi', grupa)}
                         className="p-2.5 bg-gray-50 hover:bg-blue-100 dark:bg-gray-800 dark:hover:bg-blue-900/60 border border-gray-100 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 rounded-lg shadow-sm hover:shadow-md hover:shadow-blue-200/60 dark:hover:shadow-blue-900/40 transition-all duration-200 active:scale-[0.97] text-base"
                         title="Uredi grupu"
@@ -100,7 +111,6 @@ export default function GrupeUpravljanje({ pocetneGrupe }: GrupeUpravljanjeProps
                         ✏️
                       </button>
 
-                      {/* Obriši gumb (🗑️) - POPRAVLJEN OBRUB: Dodan dark:border-gray-700 i pojačan crveni rub na hover */}
                       <button
                         onClick={() => otvoriModal('obriši', grupa)}
                         className="p-2.5 bg-gray-50 hover:bg-red-100 dark:bg-gray-800 dark:hover:bg-red-900/60 border border-gray-100 dark:border-gray-700 hover:border-red-500 dark:hover:border-red-500 rounded-lg shadow-sm hover:shadow-md hover:shadow-red-200/60 dark:hover:shadow-red-900/40 transition-all duration-200 active:scale-[0.97] text-base"
@@ -109,9 +119,56 @@ export default function GrupeUpravljanje({ pocetneGrupe }: GrupeUpravljanjeProps
                         🗑️
                       </button>
                     </div>
+
+                    {/* 📱 PRIKAZ ZA MOBITEL: Diskretni gumb s tri točkice i plutajućim opcijama */}
+                    <div className="md:hidden inline-block text-left">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOtvoreniMeniGrupaId(otvoreniMeniGrupaId === grupa.id ? null : grupa.id);
+                        }}
+                        className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700/60 font-bold text-xs transition-all active:scale-95"
+                      >
+                        •••
+                      </button>
+
+                      {/* Plutajući mini-prozorčić koji se otvara preko ekrana */}
+                      {otvoreniMeniGrupaId === grupa.id && (
+                        <>
+                          <div className="fixed inset-0 z-10" onClick={() => setOtvoreniMeniGrupaId(null)} />
+                          <div className="absolute right-2 mt-2 w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-20 p-2 flex flex-col gap-1.5 animate-in fade-in zoom-in-95 duration-100">
+                            
+                            <button
+                              onClick={() => {
+                                setOtvoreniMeniGrupaId(null);
+                                otvoriModal('uredi', grupa);
+                              }}
+                              className="w-full px-3.5 py-3 text-sm font-bold text-left rounded-xl bg-blue-50/80 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-all flex items-center gap-2.5 active:scale-[0.97]"
+                            >
+                              <span className="text-base">✏️</span>
+                              <span>Uredi grupu</span>
+                            </button>
+                            
+                            <button
+                              onClick={() => {
+                                setOtvoreniMeniGrupaId(null);
+                                otvoriModal('obriši', grupa);
+                              }}
+                              className="w-full px-3.5 py-3 text-sm font-bold text-left rounded-xl bg-red-50/80 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/60 transition-all flex items-center gap-2.5 active:scale-[0.97]"
+                            >
+                              <span className="text-base">🗑️</span>
+                              <span>Obriši grupu</span>
+                            </button>
+
+                          </div>
+                        </>
+                      )}
+                    </div>
+
                   </td>
                 </tr>
               ))}
+
             </tbody>
           </table>
         </div>
