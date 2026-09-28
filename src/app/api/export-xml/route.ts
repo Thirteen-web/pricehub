@@ -38,11 +38,11 @@ export async function GET() {
     xml += `  </artikli>\n`;
     xml += `</cjenik_izvoz>`;
 
-    // 4. Vraćamo XML odgovor s točnim Content-Type zaglavljem kako bi ga preglednik prepoznao
+    // 4. Vraćamo XML odgovor s privitkom (attachment) koji prisiljava automatsko preuzimanje
     return new Response(xml, {
       headers: {
         'Content-Type': 'application/xml; charset=utf-8',
-        'Content-Disposition': 'inline; filename="cjenik_izvoz.xml"',
+        'Content-Disposition': 'attachment; filename="cjenik_izvoz.xml"', // <--- Promijenjeno inline u attachment
       },
     });
 
