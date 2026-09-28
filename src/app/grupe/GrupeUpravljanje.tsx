@@ -78,8 +78,8 @@ export default function GrupeUpravljanje({ pocetneGrupe }: GrupeUpravljanjeProps
           <p className="text-gray-400 dark:text-gray-500 text-lg font-medium">Nema kreiranih grupa proizvoda.</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-gray-900 shadow-sm border border-gray-100 dark:border-gray-800 rounded-xl overflow-hidden transition-colors">
-          <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
+        <div className="bg-white dark:bg-gray-900 shadow-sm border border-gray-100 dark:border-gray-800 rounded-xl overflow-hidden transition-colors w-full">
+          <table className="w-full min-w-full divide-y divide-gray-100 dark:divide-gray-800">
             <thead className="bg-gray-50/70 dark:bg-gray-800/50">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">ID grupe</th>
