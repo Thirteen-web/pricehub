@@ -115,11 +115,11 @@ export default function CjenikPrikaz({ pocetniArtikli, grupe, firma }: CjenikPri
       </div>
 
 
-      {/* SEKCIJA 1: Statističke kartice */}
-         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+         {/* SEKCIJA 1: Statističke kartice - VISINA SMANJENA ZA 20PX */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 select-none">
         
         {/* Kartica 1: Ukupno artikala */}
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] border border-gray-200/80 dark:border-gray-700/60 flex items-center justify-between transition-colors">
+        <div className="bg-white dark:bg-gray-900 px-6 py-3.5 rounded-xl shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] border border-gray-200/80 dark:border-gray-700/60 flex items-center justify-between transition-colors">
           <div>
             <p className="text-sm font-medium text-gray-400 uppercase tracking-wider">Ukupno artikala</p>
             <h3 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-1">{ukupanBrojArtikala}</h3>
@@ -130,7 +130,7 @@ export default function CjenikPrikaz({ pocetniArtikli, grupe, firma }: CjenikPri
         </div>
 
         {/* Kartica 2: Ukupno grupa */}
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] border border-gray-200/80 dark:border-gray-700/60 flex items-center justify-between transition-colors">
+        <div className="bg-white dark:bg-gray-900 px-6 py-3.5 rounded-xl shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] border border-gray-200/80 dark:border-gray-700/60 flex items-center justify-between transition-colors">
           <div>
             <p className="text-sm font-medium text-gray-400 uppercase tracking-wider">Ukupno grupa</p>
             <h3 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-1">{grupe.length}</h3>
@@ -141,7 +141,7 @@ export default function CjenikPrikaz({ pocetniArtikli, grupe, firma }: CjenikPri
         </div>
 
         {/* Kartica 3: Datum zadnje promjene */}
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] border border-gray-200/80 dark:border-gray-700/60 flex items-center justify-between transition-colors">
+        <div className="bg-white dark:bg-gray-900 px-6 py-3.5 rounded-xl shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] border border-gray-200/80 dark:border-gray-700/60 flex items-center justify-between transition-colors">
           <div>
             <p className="text-sm font-medium text-gray-400 uppercase tracking-wider">Datum zadnje promjene</p>
             <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-2">{datumZadnjePromjenePrikaz}</h3>
@@ -152,7 +152,7 @@ export default function CjenikPrikaz({ pocetniArtikli, grupe, firma }: CjenikPri
         </div>
 
       </div>
-
+      
       {/* SEKCIJA 2: Kontrole */}
       <div className="bg-white dark:bg-gray-900 p-5 rounded-xl shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] border border-gray-200/80 dark:border-gray-700/60 flex flex-col md:flex-row gap-4 items-center justify-between transition-colors">
         <div className="w-full md:flex-1 relative">
