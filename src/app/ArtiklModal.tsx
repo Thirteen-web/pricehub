@@ -10,30 +10,29 @@ interface ArtiklModalProps {
   mode: 'dodaj' | 'uredi' | 'obriši';
   artikl: Artikli | null;
   grupe: Grupe[];
+  tvrtkaId: number; 
 }
 
-export default function ArtiklModal({ isOpen, onClose, mode, artikl, grupe }: ArtiklModalProps) {
+export default function ArtiklModal({ isOpen, onClose, mode, artikl, grupe, tvrtkaId }: ArtiklModalProps) {
   const [naziv, setNaziv] = useState('');
   const [grupaId, setGrupaId] = useState<number | null>(null);
   const [normativ, setNormativ] = useState('');
   const [sidrenaCijena, setSidrenaCijena] = useState('');
   const [cijena, setCijena] = useState('');
-    // Stanje za datum unosa (Zadano je današnji datum u YYYY-MM-DD formatu)
-// Stanje za datum unosa - Sigurno čita YYYY-MM-DD iz baze ili postavlja današnji datum
+  const [uTijeku, setUTijeku] = useState(false);
+
+  // Stanje za datum unosa - Sigurno čita YYYY-MM-DD iz baze ili postavlja današnji datum
   const [datumUnosa, setDatumUnosa] = useState(() => {
     if (artikl?.datum_unosa) {
-      // Uzimamo samo prvih 10 znakova (YYYY-MM-DD) iz ISO stringa baze podataka
       return artikl.datum_unosa.substring(0, 10);
     }
-    // Ako dodajemo novi artikl, uzimamo današnji lokalni datum u YYYY-MM-DD formatu
     const danas = new Date();
     const offset = danas.getTimezoneOffset();
     const lokalniDanas = new Date(danas.getTime() - (offset * 60 * 1000));
     return lokalniDanas.toISOString().substring(0, 10);
   });
-  const [uTijeku, setUTijeku] = useState(false);
 
- // Sinhronizacija podataka kada se otvori modal za uređivanje ili brisanje
+  // Sinhronizacija podataka kada se otvori modal za uređivanje ili brisanje
   useEffect(() => {
     if (isOpen) {
       if (mode !== 'dodaj' && artikl) {
@@ -43,21 +42,18 @@ export default function ArtiklModal({ isOpen, onClose, mode, artikl, grupe }: Ar
         setSidrenaCijena(artikl.sidrena_cijena ? artikl.sidrena_cijena.toString() : '');
         setCijena(artikl.cijena.toString());
         
-        // UČITAVANJE DATUMA IZ BAZE: Uzimamo samo YYYY-MM-DD dio iz ISO stringa
         if (artikl.datum_unosa) {
           setDatumUnosa(artikl.datum_unosa.substring(0, 10));
         } else {
           setDatumUnosa(new Date().toISOString().substring(0, 10));
         }
       } else {
-        // Reset polja za novi artikl
         setNaziv('');
         setGrupaId(grupe.length > 0 ? grupe[0].id : null);
         setNormativ('');
         setSidrenaCijena('');
         setCijena('');
         
-        // RESET DATUMA NA DANAŠNJI DAN: Za novi artikl automatski nudi današnji datum
         const danas = new Date();
         const offset = danas.getTimezoneOffset();
         const lokalniDanas = new Date(danas.getTime() - (offset * 60 * 1000));
@@ -85,8 +81,7 @@ export default function ArtiklModal({ isOpen, onClose, mode, artikl, grupe }: Ar
       return;
     }
 
-    const trenutniDatum = new Date().toISOString().split('T')[0];
-
+    // Pozivamo Server Action funkciju iz actions.ts i ispravno šaljemo sve podatke zajedno s tvrtkaId
     const res = await spremiArtikl({
       id: artikl?.id,
       naziv,
@@ -95,6 +90,7 @@ export default function ArtiklModal({ isOpen, onClose, mode, artikl, grupe }: Ar
       sidrena_cijena: sidrenaCijena ? parseFloat(sidrenaCijena) : null,
       cijena: parseFloat(cijena),
       datum_unosa: new Date(datumUnosa).toISOString(),
+      tvrtka_id: tvrtkaId, 
     });
 
     if (res.success) {
@@ -108,15 +104,12 @@ export default function ArtiklModal({ isOpen, onClose, mode, artikl, grupe }: Ar
   const inputStil = "w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 bg-gray-50/50 dark:bg-gray-800 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60 dark:focus:ring-blue-900/30 focus:bg-white dark:focus:bg-gray-900 transition-all duration-200 font-medium placeholder-gray-400";
 
   return (
-    // Koristimo fiksni inline stil style={{ zIndex: 9999 }} koji je 100% imun na Tailwind v4 slaganja
     <div 
       className="fixed inset-0 bg-gray-900/40 dark:bg-gray-950/60 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-200"
       style={{ zIndex: 9999 }}
     >
-      {/* Klik na zatamnjenje zatvara modal */}
       <div className="absolute inset-0" onClick={onClose} />
 
-      {/* Sadržaj modala (Kartica ispred blura) */}
       <div className="relative bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-xl w-full max-w-md border border-gray-100 dark:border-gray-800 space-y-5 z-50">
         <div>
           <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
@@ -167,7 +160,7 @@ export default function ArtiklModal({ isOpen, onClose, mode, artikl, grupe }: Ar
                 <input type="number" step="0.01" value={cijena} onChange={(e) => setCijena(e.target.value)} className={inputStil} placeholder="0.00 €" />
               </div>
             </div>
-               {/* POLJE ZA DATUM UNOSA - KLJUČNO ZA ZAKONSKU PRIMJENU CIJENA */}
+
             <div className="flex flex-col gap-1.5 w-full">
               <label className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider flex items-center gap-1.5 select-none">
                 📅 Datum unosa / promjene
@@ -176,7 +169,7 @@ export default function ArtiklModal({ isOpen, onClose, mode, artikl, grupe }: Ar
                 type="date"
                 value={datumUnosa}
                 onChange={(e) => setDatumUnosa(e.target.value)}
-               disabled={mode !== 'dodaj' && mode !== 'uredi'}
+                disabled={mode !== 'dodaj' && mode !== 'uredi'}
                 className="w-full px-4 py-2.5 bg-gray-50/50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700/60 rounded-xl text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60 dark:focus:ring-blue-900/30 transition-all font-medium disabled:opacity-50"
                 required
               />

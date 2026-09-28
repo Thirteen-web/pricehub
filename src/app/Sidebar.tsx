@@ -8,19 +8,17 @@ import {
   DocumentTextIcon, 
   FolderIcon,
   PrinterIcon,
-  DocumentArrowDownIcon,
   Cog6ToothIcon,
-  ArrowLeftOnRectangleIcon,
   SunIcon,
-  MoonIcon
+  MoonIcon,
+  ArrowLeftOnRectangleIcon
 } from '@heroicons/react/24/outline';
 
-// OVA LINIJA JE BILA POKVARENA/IZBRISANA – SADA JE ISPRAVLJENA:
 export default function Sidebar({ onAction }: { onAction?: () => void }) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
- const [generiramPdf, setGeneriramPdf] = useState(false);
+  const [generiramPdf, setGeneriramPdf] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -32,11 +30,10 @@ export default function Sidebar({ onAction }: { onAction?: () => void }) {
     setGeneriramPdf(true);
 
     try {
-          // 1. Dohvaćanje čistih podataka iz API rute
+      // 1. Dohvaćanje čistih podataka iz API rute
       const odgovor = await fetch('/api/export-pdf');
       const podaci = await odgovor.json();
 
-      // PRONAĐI NAJNOVIJI DATUM PROMJENE MEĐU ARTIKLIMA
       let zadnjaPromjenaDatum = new Date();
       if (podaci.artikli && podaci.artikli.length > 0) {
         const datumi = podaci.artikli
@@ -54,14 +51,10 @@ export default function Sidebar({ onAction }: { onAction?: () => void }) {
       const fOibBrojCist = podaci.postavke?.find((p: any) => p.kljuc === 'firma_oib')?.vrijednost || '00000000000';
       const zakonskaCista = podaci.postavke?.find((p: any) => p.kljuc === 'zakonska_napomena')?.vrijednost || '';
 
-      // 2. Dinamički uvozimo pdfmake unutar preglednika
       const pdfMake = (await import('pdfmake/build/pdfmake')).default;
       const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
-
-      // Pretvaramo u 'any' kako bismo trajno ugasili podvlačenje crvene linije na vfs i fonts svojstvima
       const printerInstance = pdfMake as any;
 
-      // Povezivanje virtualnog sustava datoteka (vfs)
       if (pdfFonts && (pdfFonts as any).pdfMake?.vfs) {
         printerInstance.vfs = (pdfFonts as any).pdfMake.vfs;
       } else if (pdfFonts && (pdfFonts as any).vfs) {
@@ -70,7 +63,6 @@ export default function Sidebar({ onAction }: { onAction?: () => void }) {
         printerInstance.vfs = (pdfFonts as any);
       }
 
-      // Definiranje Roboto fonta s ugrađenom UTF-8 unicode podrškom
       printerInstance.fonts = {
         Roboto: {
           normal: 'Roboto-Regular.ttf',
@@ -80,7 +72,6 @@ export default function Sidebar({ onAction }: { onAction?: () => void }) {
         }
       };
 
-        // 3. Priprema redova za tablicu (Službena plava boja teksta #2563eb na srebrnoj pozadini #c0c0c0)
       const tableRows = [
         [
           { text: 'Naziv artikla', bold: true, color: '#224dab', fillColor: '#e1e1e1' },
@@ -91,20 +82,12 @@ export default function Sidebar({ onAction }: { onAction?: () => void }) {
         ]
       ];
 
-      // Punjenje tablice podacima uz strogu provjeru: samo datumi nakon 01.10.2026. dobivaju natpis
       (podaci.artikli || []).forEach((art: any) => {
-        // Priprema datuma artikla za usporedbu
         const datumArtikla = art.datum_unosa ? new Date(art.datum_unosa) : null;
-        
-        // POSTAVLJAMO GRANICU NA KRAJ DANA 01.10.2026. (23 sata, 59 minuta, 59 sekundi)
         const granicaUsporedbe = new Date('2026-10-01T23:59:59');
         const formatiraniDatum = datumArtikla ? datumArtikla.toLocaleDateString('hr-HR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-';
-
-        // UVJET: Datum unosa mora biti strogo veći od kraja dana 01.10.2026.
-        // Artikli uneseni 01.10.2026. i prije garantirano NEĆE imati datum ispod cijene!
         const jeNoviDatum = datumArtikla && datumArtikla.getTime() > granicaUsporedbe.getTime();
 
-   // Konstrukcija pete ćelije (Trenutna cijena - USKLAĐENA BOJA TEKSTA NA KRALJEVSKO PLAVU #224dab)
         const trenutnaCijenaCelija: any = {
           text: [
             { text: `${Number(art.cijena).toFixed(2)} €\n`, bold: true, color: '#224dab', fontSize: 9 }
@@ -112,7 +95,6 @@ export default function Sidebar({ onAction }: { onAction?: () => void }) {
           alignment: 'right'
         };
 
-        // Ako je uvjet ispunjen (artikl modificiran od 02.10.2026. nadalje), ispisujemo datum primjene
         if (jeNoviDatum) {
           trenutnaCijenaCelija.text.push({
             text: `od: ${formatiraniDatum}`,
@@ -131,203 +113,152 @@ export default function Sidebar({ onAction }: { onAction?: () => void }) {
         ]);
       });
       
-      const danasnjiDatum = new Date().toLocaleDateString('hr-HR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-
-      // 4. Definicija strukture cijelog PDF dokumenta
       const docDefinition: any = {
         content: [
-          // Gornji dio: Memorandum i Naziv cjenika
           {
             columns: [
+              { text: `${fNaziv.toUpperCase()}\n${fAdresa}\nOIB: ${fOibBrojCist}`, fontSize: 9, color: '#646464', lineHeight: 1.3 },
               {
-                text: `${fNaziv.toUpperCase()}\n${fAdresa}\nOIB: ${fOibBrojCist}`,
-                fontSize: 9,
-                color: '#646464',
+                text: [
+                  { text: 'CJENIK PROIZVODA\n', fontSize: 16, bold: true, color: '#224dab' },
+                  { text: `Zadnja promjena: ${prikazniDatumZadnjePromjene}.g`, fontSize: 8, bold: false, color: '#646464' }
+                ],
+                alignment: 'right',
                 lineHeight: 1.3
-              },
-                 {
-              // Usklađena boja naslova u duboku kraljevsko plavu #224dab kako bi se savršeno slagala s tablicom
-              text: [
-                { text: 'CJENIK PROIZVODA\n', fontSize: 16, bold: true, color: '#224dab' },
-                { text: `Zadnja promjena: ${prikazniDatumZadnjePromjene}.g`, fontSize: 8, bold: false, color: '#646464' }
-              ],
-              alignment: 'right',
-              lineHeight: 1.3
-            }
+              }
             ],
-            margin: [0, 0, 0, 20] // Fiksna tekstualna margina ispod memoranduma
-          },
-          // Elegantna horizontalna crta razdvajanja
-          {
-            canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 0.5, lineColor: '#e2e8f0' }],
             margin: [0, 0, 0, 20]
           },
-          // Glavna tablica s artiklima
+          { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 0.5, lineColor: '#e2e8f0' }], margin: [0, 0, 0, 20] },
           {
             table: {
-            headerRows: 1,
-            // Proširena oba stupca cijena kako bi idealno zatvorili A4 format
-            widths: ['32%', '20%', '12%', '19%', '17%'],
-            body: tableRows
-          },
+              headerRows: 1,
+              widths: ['32%', '20%', '12%', '19%', '17%'],
+              body: tableRows
+            },
             layout: {
-              // GLOBALNI VERTIKALNI PADDING KOJI VRAĆA TEKST U APSOLUTNI CENTAR
               paddingLeft: () => 6,
               paddingRight: () => 6,
-              paddingTop: () => 10,    // <--- Dodajte ovo (odmak od gornjeg ruba)
-              paddingBottom: () => 10, // <--- Dodajte ovo (odmak od donjeg ruba)
-              fillColor: function (rowIndex: number) {
-                if (rowIndex === 0) return null;
-                return (rowIndex % 2 === 0) ? '#f8fafc' : null;
-              },
+              paddingTop: () => 10,
+              paddingBottom: () => 10,
+              fillColor: (rowIndex: number) => (rowIndex !== 0 && rowIndex % 2 === 0) ? '#f8fafc' : null,
               hLineColor: () => '#cbd5e1',
               vLineColor: () => '#cbd5e1',
               hLineWidth: () => 0.3,
               vLineWidth: () => 0.3
             }
-          }
+          },
+          { text: zakonskaCista, fontSize: 8, color: '#646464', margin:[0, 20, 0, 0], lineHeight: 1.4 }
         ],
-      
-         // ZAKONSKA NAPOMENA + DINAMIČKI BROJEVI STRANICA FIKSIRANI NA DNU SVAKE STRANICE
-        footer: function (currentPage: number, pageCount: number) {
-          return {
-            stack: [
-              // Horizontalna linija tik iznad footera
-              { canvas: [{ type: 'line', x1: 40, y1: 0, x2: 555, y2: 0, lineWidth: 0.5, lineColor: '#e2e8f0' }] },
-              {
-                columns: [
-                  // Lijeva strana footera: Zakonska napomena
-                  { text: zakonskaCista, fontSize: 8, color: '#7c7c7c', alignment: 'left', width: '75%' },
-                  // Desna strana footera: Dinamički brojevi stranica
-                  { text: `Stranica ${currentPage} od ${pageCount}`, fontSize: 8, color: '#7c7c7c', alignment: 'right', width: '25%' }
-                ],
-                margin: [40, 6, 40, 0] // Fiksne margine: [lijevo, gore, desno, dolje] ugrađene kao čisti brojevi
-              }
-            ],
-            margin: [0, 0, 0, 10]
-          };
-        },
-
-        defaultStyle: {
-          font: 'Roboto', // Aktivacija fonta s punom UTF-8 podrškom
-          fontSize: 9
-        },
-        pageMargins: [40, 40, 40, 60] // Gornja, lijeva, desna i donja margina stranice
+        pageMargins: [40, 40, 40, 40]
       };
 
-      // 5. Otvaranje čistog PDF-a u novom tabu preglednika
-      pdfMake.createPdf(docDefinition).open();
-
-    } catch (gError) {
-      console.error('Greška pri klijentskom generiranju PDF-a:', gError);
+      printerInstance.createPdf(docDefinition).open();
+    } catch (err) {
+      console.error('Greška pri generiranju PDF-a:', err);
     } finally {
       setGeneriramPdf(false);
     }
   };
 
-
-  if (pathname === '/login') return null;
-
-  const dobiStilGumba = (ruta: string) => {
-    const jeAktivna = pathname === ruta;
-    const bazniStil = "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group w-full text-left";
-    
-    if (jeAktivna) {
-      return `${bazniStil} bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 shadow-sm border border-blue-100/50 dark:border-blue-900/30`;
-    }
-    return `${bazniStil} text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100`;
+     const dobiStilGumba = (ruta: string) => {
+    const aktivan = pathname === ruta;
+    return `flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all select-none ${
+      aktivan 
+        ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold shadow-sm' 
+        : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 font-semibold'
+    }`;
   };
 
-  const dobiStilIkone = (ruta: string) => {
-    return pathname === ruta 
-      ? "w-5 h-5 text-blue-600 dark:text-blue-400" 
-      : "w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors";
-  };
+  if (!mounted) return null;
 
-  return (
-    <div className="h-[calc(100vh-60px)] md:h-[calc(100vh-80px)] flex flex-col justify-between p-4 pb-8 select-none overflow-y-auto">
+   return (
+    <div className="h-full flex flex-col justify-between p-4 pt-14 pb-8 select-none">
+      
+      {/* 1. GLAVNA NAVIGACIJA + GUMBI ZA IZVOZ/ISPIS */}
       <nav className="flex-1 space-y-2">
-
-        <Link href="/" onClick={onAction}  className={dobiStilGumba('/')}>
-          <DocumentTextIcon className={dobiStilIkone('/')} />
-          Digitalni cjenik
+        <Link href="/" onClick={onAction} className={dobiStilGumba('/')}>
+          <DocumentTextIcon className="w-5 h-5" />
+          <span>Digitalni cjenik</span>
         </Link>
 
         <Link href="/grupe" onClick={onAction} className={dobiStilGumba('/grupe')}>
-          <FolderIcon className={dobiStilIkone('/grupe')} />
-          Grupe proizvoda
+          <FolderIcon className="w-5 h-5" />
+          <span>Grupe proizvoda</span>
         </Link>
 
         <Link href="/postavke" onClick={onAction} className={dobiStilGumba('/postavke')}>
-          <Cog6ToothIcon className={dobiStilIkone('/postavke')} />
-          Opcije sustava
+          <Cog6ToothIcon className="w-5 h-5" />
+          <span>Postavke sustava</span>
         </Link>
 
-        {/* Sekcija: Izvještaji */}
-        <div className="pt-4 border-t border-gray-100 dark:border-gray-800 mt-4 space-y-1">
-          <p className="px-4 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Izvještaji</p>
-          
-              <button 
-            onClick={(e) => {
-              // 1. Ako postoji funkcija zatvaranja (na mobitelu), zatvori izbornik odmah
-              if (onAction) onAction(); 
-              
-              // 2. Pokreni generiranje i otvaranje čistog PDF cjenika
-              pokreniGeneriranjePdfa(e);
-            }}
-            disabled={generiramPdf}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-200 group w-full text-left disabled:opacity-50"
-          >
-            <PrinterIcon className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
-            {generiramPdf ? 'Priprema PDF-a...' : 'Ispis cjenika (PDF)'}
-          </button>
+        {/* --- RAZDJELNIK --- */}
+        <div className="my-4 border-t border-gray-100 dark:border-gray-800/60 pt-2" />
 
-          <a href="/api/export-csv" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-200 group">
-            <DocumentArrowDownIcon className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
-            Financijski CSV (Excel)
-          </a>
+        {/* PDF Gumb */}
+        <button 
+          onClick={(e) => { if (onAction) onAction(); pokreniGeneriranjePdfa(e); }}
+          disabled={generiramPdf}
+          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all group w-full text-left disabled:opacity-50"
+        >
+          <PrinterIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+          <span>{generiramPdf ? 'Priprema PDF-a...' : 'Ispis cjenika (PDF)'}</span>
+        </button>
 
-          <a href="/api/export-xml" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-200 group">
-            <DocumentArrowDownIcon className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
-            Kontrolni XML file
-          </a>
-        </div>
+        {/* CSV Gumb */}
+        <Link 
+          href="/api/export-csv"
+          onClick={onAction}
+          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all group w-full text-left"
+        >
+          <PrinterIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+          <span>Izvoz podataka (CSV)</span>
+        </Link>
+
+        {/* XML Gumb */}
+        <Link 
+          href="/export-xml"
+          onClick={onAction}
+          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all group w-full text-left"
+        >
+          <PrinterIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+          <span>Izvoz cjenika (XML)</span>
+        </Link>
       </nav>
 
-      {/* Donji dio: Tema i Odjava */}
-      <div className="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-1">
-        {mounted && (
-          <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-200 w-full text-left group"
-          >
-            {theme === 'dark' ? (
-              <>
-                <SunIcon className="w-5 h-5 text-amber-500 transition-transform duration-300 group-hover:rotate-45" />
-                <span>Svijetli način</span>
-              </>
-            ) : (
-              <>
-                <MoonIcon className="w-5 h-5 text-blue-500 transition-transform duration-300 group-hover:-rotate-12" />
-                <span>Tamni način</span>
-              </>
-            )}
-          </button>
-        )}
+      {/* 2. SPUŠTENI DIO: UPRAVLJANJE APLIKACIJOM (Tema i Odjava) */}
+      <div className="space-y-2 pt-4 border-t border-gray-100 dark:border-gray-800">
+        {/* Prebacivanje teme */}
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all w-full text-left"
+        >
+          {theme === 'dark' ? (
+            <><SunIcon className="w-5 h-5 text-amber-500" /><span>Svijetli način</span></>
+          ) : (
+            <><MoonIcon className="w-5 h-5 text-blue-600" /><span>Tamni način</span></>
+          )}
+        </button>
 
-        <button 
+        {/* Gumb za odjavu */}
+          {/* Gumb za odjavu - SADA DISKRETAN I UGODAN ZA OKO */}
+        <button
           onClick={async () => {
             const { supabase } = await import('@/utils/supabase');
             await supabase.auth.signOut();
-            document.cookie = "cjenik-session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            document.cookie = 'cjenik-session=; Max-Age=0; path=/;';
+            if (onAction) onAction();
             window.location.href = '/login';
           }}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 dark:text-gray-400 hover:bg-red-50/60 dark:hover:bg-red-950/20 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200 active:scale-[0.98] w-full text-left group"
+          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 hover:bg-red-50/60 dark:hover:bg-red-950/20 transition-all w-full text-left mt-2 select-none group"
         >
-          <ArrowLeftOnRectangleIcon className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors" />
-          Odjava iz sustava
+          {/* Ikona je u startu siva, a na hover postaje crvena prateći tekst */}
+          <ArrowLeftOnRectangleIcon className="w-5 h-5 text-gray-400 group-hover:text-red-500 dark:text-gray-500 dark:group-hover:text-red-400" />
+          <span>Odjava iz sustava</span>
         </button>
       </div>
+
     </div>
   );
 }
+

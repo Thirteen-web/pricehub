@@ -21,8 +21,9 @@ interface CjenikPrikazProps {
     adresa: string;
     oib: string;
   };
+  tvrtkaId: number;
 }
-export default function CjenikPrikaz({ pocetniArtikli, grupe, firma }: CjenikPrikazProps) {
+export default function CjenikPrikaz({ pocetniArtikli, grupe, firma, tvrtkaId  }: CjenikPrikazProps) {
   const [odabranaGrupa, setOdabranaGrupa] = useState<number | 'sve'>('sve');
   const [pojamZaPretragu, setPojamZaPretragu] = useState('');
   // STANJA ZA PAGINACIJU (Stranice od po 10 artikala)
@@ -152,7 +153,7 @@ export default function CjenikPrikaz({ pocetniArtikli, grupe, firma }: CjenikPri
         </div>
 
       </div>
-      
+
       {/* SEKCIJA 2: Kontrole */}
       <div className="bg-white dark:bg-gray-900 p-5 rounded-xl shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] border border-gray-200/80 dark:border-gray-700/60 flex flex-col md:flex-row gap-4 items-center justify-between transition-colors">
         <div className="w-full md:flex-1 relative">
@@ -364,6 +365,7 @@ export default function CjenikPrikaz({ pocetniArtikli, grupe, firma }: CjenikPri
         mode={modalMode}
         artikl={odabraniArtikl as any}
         grupe={grupe}
+        tvrtkaId={tvrtkaId} 
       />
     </div>
   );

@@ -1,43 +1,63 @@
 import { supabase } from '@/utils/supabase';
-import CjenikPrikaz from './CjenikPrikaz'; // <--- OVO JE TOČNA RELATIVNA PUTANJA KOJA UKLANJA SVE GREŠKE!
+import CjenikPrikaz from './CjenikPrikaz'; 
 
-async function getCjenikPodaci() {
-  // 1. Dohvaćanje artikala s njihovim grupama
+async function getCjenikPodaci(tvrtkaId: number) {
   const { data: artikli } = await supabase
     .from('artikli')
     .select('*, grupe(naziv)')
+    .eq('tvrtka_id', tvrtkaId) 
+    .order('grupa_id', { ascending: true })
     .order('naziv', { ascending: true });
 
-  // 2. Dohvaćanje svih grupa proizvoda
   const { data: grupe } = await supabase
     .from('grupe')
     .select('*')
+    .eq('tvrtka_id', tvrtkaId) 
     .order('naziv', { ascending: true });
 
-  // 3. Dohvaćanje svih postavki iz baze podataka
-  const { data: postavke } = await supabase
-    .from('postavke')
-    .select('kljuc, vrijednost');
-
-  const fNaziv = postavke?.find(p => p.kljuc === 'firma_naziv')?.vrijednost || 'Naziv tvrtke d.o.o.';
-  const fAdresa = postavke?.find(p => p.kljuc === 'firma_adresa')?.vrijednost || 'Ulica i kućni broj, Grad';
-  const fOib = postavke?.find(p => p.kljuc === 'firma_oib')?.vrijednost || 'OIB: 00000000000';
+  const { data: tvrtkaPodaci } = await supabase
+    .from('tvrtke')
+    .select('naziv, adresa, oib')
+    .eq('id', tvrtkaId)
+    .single();
 
   return {
     artikli: (artikli as any[]) || [],
     grupe: (grupe as any[]) || [],
-    firma: { naziv: fNaziv, adresa: fAdresa, oib: fOib }
+    firma: { 
+      naziv: tvrtkaPodaci?.naziv || 'Naziv tvrtke d.o.o.', 
+      adresa: tvrtkaPodaci?.adresa || 'Ulica i kućni broj, Grad', 
+      oib: tvrtkaPodaci?.oib || '00000000000' 
+    }
   };
 }
 
 export default async function Home() {
-  const { artikli, grupe, firma } = await getCjenikPodaci();
+  let trenutnaTvrtkaId = 1; 
+
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profil } = await supabase
+        .from('korisnici_profili')
+        .select('tvrtka_id')
+        .eq('id', user.id)
+        .single();
+
+      if (profil?.tvrtka_id) {
+        trenutnaTvrtkaId = Number(profil.tvrtka_id);
+      }
+    }
+  } catch (authError) {
+    console.warn('Problem sa sesijom, koristim fallback tvrtku 1:', authError);
+  }
+
+  const { artikli, grupe, firma } = await getCjenikPodaci(trenutnaTvrtkaId);
 
   return (
-    // Puna Dark Mode sinkronizacija pozadine na glavnom ekranu
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 pt-2 transition-colors duration-200">
+    <main className="w-full pt-2">
       <div className="max-w-7xl mx-auto space-y-6">
-        <CjenikPrikaz pocetniArtikli={artikli} grupe={grupe} firma={firma} />
+        <CjenikPrikaz pocetniArtikli={artikli} grupe={grupe} firma={firma} tvrtkaId={trenutnaTvrtkaId} />
       </div>
     </main>
   );

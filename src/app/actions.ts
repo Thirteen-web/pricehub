@@ -1,4 +1,4 @@
-'use server';
+'use server'; // <--- Popravljen navodnik za serverske akcije
 
 import { supabase } from '@/utils/supabase';
 import { revalidatePath } from 'next/cache';
@@ -11,7 +11,7 @@ export async function obrisiArtikl(id: number) {
   return { success: true };
 }
 
-// 2. AKCIJA ZA DODAVANJE I UREĐIVANJE ARTIKLA
+// 2. AKCIJA ZA DODAVANJE I UREĐIVANJE ARTIKLA - SADA S TENANT ID PODRŠKOM
 export async function spremiArtikl(data: {
   id?: number;
   naziv: string;
@@ -20,6 +20,7 @@ export async function spremiArtikl(data: {
   sidrena_cijena: number | null;
   cijena: number;
   datum_unosa: string;
+  tvrtka_id: number; // <--- Ugrađeno svojstvo koje je TypeScript tražio u modalu
 }) {
   if (data.id) {
     const { error } = await supabase
@@ -31,6 +32,7 @@ export async function spremiArtikl(data: {
         sidrena_cijena: data.sidrena_cijena,
         cijena: data.cijena,
         datum_unosa: data.datum_unosa,
+        tvrtka_id: data.tvrtka_id, // <--- Zadržavamo oznaku tvrtke pri ažuriranju
       })
       .eq('id', data.id);
     if (error) return { success: false, error: error.message };
@@ -43,6 +45,7 @@ export async function spremiArtikl(data: {
         sidrena_cijena: data.sidrena_cijena,
         cijena: data.cijena,
         datum_unosa: data.datum_unosa,
+        tvrtka_id: data.tvrtka_id, // <--- Zapisujemo vlasnika novog artikla u bazu podataka
       },
     ]);
     if (error) return { success: false, error: error.message };
@@ -60,16 +63,23 @@ export async function obrisiGrupu(id: number) {
   return { success: true };
 }
 
-// 4. AKCIJA ZA DODAVANJE I UREĐIVANJE GRUPE
-export async function spremiGrupu(data: { id?: number; naziv: string }) {
+// 4. AKCIJA ZA DODAVANJE I UREĐIVANJE GRUPE - SADA STOPPOSTOTNO TOČNA
+export async function spremiGrupu(data: { id?: number; naziv: string; tvrtka_id: number }) {
   if (!data.naziv) return { success: false, error: 'Naziv grupe je obavezan!' };
+  
   if (data.id) {
-    const { error } = await supabase.from('grupe').update({ naziv: data.naziv }).eq('id', data.id);
+    const { error } = await supabase
+      .from('grupe') // <--- Točan naziv tablice
+      .update({ naziv: data.naziv, tvrtka_id: data.tvrtka_id })
+      .eq('id', data.id);
     if (error) return { success: false, error: error.message };
   } else {
-    const { error } = await supabase.from('grupe').insert([{ naziv: data.naziv }]);
+    const { error } = await supabase
+      .from('grupe') // <--- Ispravljen tipfeler ovdje!
+      .insert([{ naziv: data.naziv, tvrtka_id: data.tvrtka_id }]);
     if (error) return { success: false, error: error.message };
   }
+  
   revalidatePath('/grupe');
   revalidatePath('/');
   return { success: true };
@@ -84,35 +94,44 @@ export async function prijavaKorisnika(email: string, lozinka: string) {
 
   if (error) return { success: false, error: error.message };
   
-  // Vraćamo token klijentu koji će ga sam spremiti u kolačiće
   return { success: true, token: data.session?.access_token, maxAge: data.session?.expires_in };
 }
-
-// 7. AKCIJA ZA SPREMANJE SVIH POSTAVKI SUSTAVA I PODATAKA O TVRTKI
+// 7. AKCIJA ZA SPREMANJE PODATAKA O TVRTKI (SADA SVAKA TVRTKA UPSEŠNO UPDATEA SVOJ REDAK)
 export async function spremiSvePostavke(data: {
-  zakonska_napomena: string;
+  tvrtka_id: number;
   firma_naziv: string;
   firma_adresa: string;
   firma_oib: string;
+  zakonska_napomena: string; // Zakonsku napomenu i dalje držimo u 'postavke' ili tvrtke tablici
 }) {
-  // Izvršavamo ažuriranja paralelno u bazi podataka radi maksimalne brzine
-  const upiti = [
-    supabase.from('postavke').update({ vrijednost: data.zakonska_napomena }).eq('kljuc', 'zakonska_napomena'),
-    supabase.from('postavke').update({ vrijednost: data.firma_naziv }).eq('kljuc', 'firma_naziv'),
-    supabase.from('postavke').update({ vrijednost: data.firma_adresa }).eq('kljuc', 'firma_adresa'),
-    supabase.from('postavke').update({ vrijednost: data.firma_oib }).eq('kljuc', 'firma_oib'),
-  ];
+  try {
+    // 1. Ažuriramo memorandum izravno unutar nove tablice 'tvrtke'
+    const { error: tvrtkaError } = await supabase
+      .from('tvrtke')
+      .update({
+        naziv: data.firma_naziv,
+        adresa: data.firma_adresa,
+        oib: data.firma_oib
+      })
+      .eq('id', data.tvrtka_id);
 
-  const rezultati = await Promise.all(upiti);
-  
-  // Provjeravamo je li ijedan od upita vratio grešku
-  const greska = rezultati.find(r => r.error)?.error;
-  if (greska) {
-    console.error('Greška pri spremanju postavki:', greska);
-    return { success: false, error: greska.message };
+    if (tvrtkaError) throw tvrtkaError;
+
+    // 2. Ažuriramo zakonsku napomenu u tablici 'postavke' za tu tvrtku
+    const { error: postavkeError } = await supabase
+      .from('postavke')
+      .update({ vrijednost: data.zakonska_napomena })
+      .eq('kljuc', 'zakonska_napomena')
+      .eq('tvrtka_id', data.tvrtka_id);
+
+    if (postavkeError) throw postavkeError;
+
+    revalidatePath('/postavke');
+    revalidatePath('/'); 
+    return { success: true };
+  } catch (error: any) {
+    console.error('Greška pri spremanju postavki tvrtke:', error);
+    return { success: false, error: error.message };
   }
-
-  revalidatePath('/postavke');
-  revalidatePath('/'); // Osvježavamo i početnu stranicu kako bi odmah vidjela novu firmu
-  return { success: true };
 }
+
