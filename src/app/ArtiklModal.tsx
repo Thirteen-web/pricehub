@@ -18,17 +18,37 @@ export default function ArtiklModal({ isOpen, onClose, mode, artikl, grupe }: Ar
   const [normativ, setNormativ] = useState('');
   const [sidrenaCijena, setSidrenaCijena] = useState('');
   const [cijena, setCijena] = useState('');
+    // Stanje za datum unosa (Zadano je današnji datum u YYYY-MM-DD formatu)
+// Stanje za datum unosa - Sigurno čita YYYY-MM-DD iz baze ili postavlja današnji datum
+  const [datumUnosa, setDatumUnosa] = useState(() => {
+    if (artikl?.datum_unosa) {
+      // Uzimamo samo prvih 10 znakova (YYYY-MM-DD) iz ISO stringa baze podataka
+      return artikl.datum_unosa.substring(0, 10);
+    }
+    // Ako dodajemo novi artikl, uzimamo današnji lokalni datum u YYYY-MM-DD formatu
+    const danas = new Date();
+    const offset = danas.getTimezoneOffset();
+    const lokalniDanas = new Date(danas.getTime() - (offset * 60 * 1000));
+    return lokalniDanas.toISOString().substring(0, 10);
+  });
   const [uTijeku, setUTijeku] = useState(false);
 
-  // Sinhronizacija podataka kada se otvori modal za uređivanje ili brisanje
+ // Sinhronizacija podataka kada se otvori modal za uređivanje ili brisanje
   useEffect(() => {
     if (isOpen) {
-      if ((mode === 'uredi' || mode === 'obriši') && artikl) {
+      if (mode !== 'dodaj' && artikl) {
         setNaziv(artikl.naziv);
         setGrupaId(artikl.grupa_id);
         setNormativ(artikl.normativ || '');
         setSidrenaCijena(artikl.sidrena_cijena ? artikl.sidrena_cijena.toString() : '');
         setCijena(artikl.cijena.toString());
+        
+        // UČITAVANJE DATUMA IZ BAZE: Uzimamo samo YYYY-MM-DD dio iz ISO stringa
+        if (artikl.datum_unosa) {
+          setDatumUnosa(artikl.datum_unosa.substring(0, 10));
+        } else {
+          setDatumUnosa(new Date().toISOString().substring(0, 10));
+        }
       } else {
         // Reset polja za novi artikl
         setNaziv('');
@@ -36,6 +56,12 @@ export default function ArtiklModal({ isOpen, onClose, mode, artikl, grupe }: Ar
         setNormativ('');
         setSidrenaCijena('');
         setCijena('');
+        
+        // RESET DATUMA NA DANAŠNJI DAN: Za novi artikl automatski nudi današnji datum
+        const danas = new Date();
+        const offset = danas.getTimezoneOffset();
+        const lokalniDanas = new Date(danas.getTime() - (offset * 60 * 1000));
+        setDatumUnosa(lokalniDanas.toISOString().substring(0, 10));
       }
     }
   }, [isOpen, mode, artikl, grupe]);
@@ -68,7 +94,7 @@ export default function ArtiklModal({ isOpen, onClose, mode, artikl, grupe }: Ar
       normativ: normativ || null,
       sidrena_cijena: sidrenaCijena ? parseFloat(sidrenaCijena) : null,
       cijena: parseFloat(cijena),
-      datum_unosa: trenutniDatum,
+      datum_unosa: new Date(datumUnosa).toISOString(),
     });
 
     if (res.success) {
@@ -140,6 +166,20 @@ export default function ArtiklModal({ isOpen, onClose, mode, artikl, grupe }: Ar
                 <label className="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Trenutna cijena</label>
                 <input type="number" step="0.01" value={cijena} onChange={(e) => setCijena(e.target.value)} className={inputStil} placeholder="0.00 €" />
               </div>
+            </div>
+               {/* POLJE ZA DATUM UNOSA - KLJUČNO ZA ZAKONSKU PRIMJENU CIJENA */}
+            <div className="flex flex-col gap-1.5 w-full">
+              <label className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider flex items-center gap-1.5 select-none">
+                📅 Datum unosa / promjene
+              </label>
+              <input
+                type="date"
+                value={datumUnosa}
+                onChange={(e) => setDatumUnosa(e.target.value)}
+               disabled={mode !== 'dodaj' && mode !== 'uredi'}
+                className="w-full px-4 py-2.5 bg-gray-50/50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700/60 rounded-xl text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60 dark:focus:ring-blue-900/30 transition-all font-medium disabled:opacity-50"
+                required
+              />
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
