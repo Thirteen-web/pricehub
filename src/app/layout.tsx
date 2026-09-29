@@ -12,19 +12,21 @@ export const metadata: Metadata = {
   description: 'Sustav za praćenje i kalkulaciju cijena',
 };
 
-// Funkcija koja na serveru dohvaća firmu za layout
-async function dohvatiGlobalnuFirmaPostavku() {
+// Dohvaćanje profila i uloge na serveru (neprobojna metoda)
+async function dohvatiGlobalneSaaSPodatke() {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
-    const { data: profil } = await supabase
+    // Dohvaćamo tvrtku i ulogu običnim selectom bez .single kočnice
+    const { data: profilData } = await supabase
       .from('korisnici_profili')
-      .select('tvrtka_id')
-      .eq('id', user.id)
-      .single();
+      .select('tvrtka_id, uloga')
+      .eq('id', user.id);
 
+    const profil = profilData && profilData.length > 0 ? profilData[0] : null;
     const tvrtkaId = profil?.tvrtka_id ? Number(profil.tvrtka_id) : 1;
+    const uloga = profil?.uloga || 'korisnik';
 
     const { data: tvrtka } = await supabase
       .from('tvrtke')
@@ -32,7 +34,7 @@ async function dohvatiGlobalnuFirmaPostavku() {
       .eq('id', tvrtkaId)
       .single();
 
-    return tvrtka;
+    return { tvrtka, uloga };
   } catch {
     return null;
   }
@@ -43,20 +45,22 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const tvrtkaPodaci = await dohvatiGlobalnuFirmaPostavku();
+  const saasPodaci = await dohvatiGlobalneSaaSPodatke();
   
   const firma = {
-    naziv: tvrtkaPodaci?.naziv || 'Naziv tvrtke d.o.o.',
-    adresa: tvrtkaPodaci?.adresa || 'Ulica i broj, Grad',
-    oib: tvrtkaPodaci?.oib || '00000000000'
+    naziv: saasPodaci?.tvrtka?.naziv || 'Naziv tvrtke d.o.o.',
+    adresa: saasPodaci?.tvrtka?.adresa || 'Ulica i broj, Grad',
+    oib: saasPodaci?.tvrtka?.oib || '00000000000'
   };
+
+  const ulogaKorisnika = saasPodaci?.uloga || 'korisnik';
 
   return (
     <html lang="hr" suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>
-          {/* LayoutKontejner je ponovno tu i drži cijeli dizajn aplikacije na okupu! */}
-          <LayoutKontejner firma={firma}>
+          {/* Prosljeđujemo i ulogu i firmu direktno sa servera u layout */}
+          <LayoutKontejner firma={firma} uloga={ulogaKorisnika}>
             {children}
           </LayoutKontejner>
         </Providers>

@@ -134,4 +134,71 @@ export async function spremiSvePostavke(data: {
     return { success: false, error: error.message };
   }
 }
+// 8. SUPERADMIN AKCIJA: KREIRANJE NOVE TVRTKE I KORISNIKA IZAPLIKACIJE
+export async function kreirajNovuTvrtkuIKorisnika(data: {
+  naziv_tvrtke: string;
+  adresa_tvrtke: string;
+  oib_tvrtke: string;
+  email_korisnika: string;
+  lozinka_korisnika: string;
+  ime_prezime: string;
+}) {
+  try {
+    // 1. Upisujemo novu tvrtku u tablicu 'tvrtke'
+    const { data: novaTvrtka, error: tvrtkaError } = await supabase
+      .from('tvrtke')
+      .insert([
+        {
+          naziv: data.naziv_tvrtke,
+          adresa: data.adresa_tvrtke,
+          oib: data.oib_tvrtke,
+        },
+      ])
+      .select()
+      .single();
+
+    if (tvrtkaError) throw tvrtkaError;
+    const novaTvrtkaId = novaTvrtka.id;
+
+    // 2. Registriramo novog korisnika u Supabase Auth sustavu pomoću administrativnog ključa
+    // (Napomena: Koristimo signUp, a budući da si ti ulogiran, ovo stvara čisti Auth zapis)
+    const { data: authKorisnik, error: authError } = await supabase.auth.signUp({
+      email: data.email_korisnika.trim(),
+      password: data.lozinka_korisnika,
+      options: {
+        data: {
+          ime_prezime: data.ime_prezime,
+        }
+      }
+    });
+
+    if (authError) throw authError;
+    if (!authKorisnik.user) throw new Error('Korisnik nije uspješno kreiran u Auth sustavu.');
+
+    // 3. Povezujemo novostvorenog korisnika s njegovom tvrtkom u 'korisnici_profili'
+    const { error: profilError } = await supabase
+      .from('korisnici_profili')
+      .insert([
+        {
+          id: authKorisnik.user.id,
+          tvrtka_id: novaTvrtkaId,
+          ime_prezime: data.ime_prezime,
+          uloga: 'korisnik', // Novi klijent je običan korisnik svog cjenika
+        },
+      ]);
+
+    if (profilError) throw profilError;
+
+    // 4. Inicijalno ubacujemo praznu zakonsku napomenu za novu tvrtku u 'postavke'
+    await supabase.from('postavke').insert([
+      { kljuc: 'zakonska_napomena', vrijednost: 'U cijene je uračunat PDV.', tvrtka_id: novaTvrtkaId }
+    ]);
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Greška u superadmin kreiranju tvrtke:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { supabase } from '@/utils/supabase';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -14,7 +15,10 @@ import {
   ArrowLeftOnRectangleIcon
 } from '@heroicons/react/24/outline';
 
-export default function Sidebar({ onAction }: { onAction?: () => void }) {
+export default function Sidebar(props: any)  { {
+  const onAction = props.onAction;
+  const uloga = props.uloga;
+  
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -169,9 +173,7 @@ export default function Sidebar({ onAction }: { onAction?: () => void }) {
         : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 font-semibold'
     }`;
   };
-
-  if (!mounted) return null;
-
+  
    return (
     <div className="h-full flex flex-col justify-between p-4 pt-14 pb-8 select-none">
       
@@ -191,6 +193,18 @@ export default function Sidebar({ onAction }: { onAction?: () => void }) {
           <Cog6ToothIcon className="w-5 h-5" />
           <span>Postavke sustava</span>
         </Link>
+
+          {/* Gumb 4: Superadmin panel - VIDLJIV ISKLJUČIVO GLAVNOM ADMINISTRATORU */}
+        {uloga === 'admin' && (
+          <Link 
+            href="/admin" 
+            onClick={onAction}
+            className={dobiStilGumba('/admin')}
+          >
+            <span>👑</span>
+            <span>Superadmin panel</span>
+          </Link>
+        )}
 
         {/* --- RAZDJELNIK --- */}
         <div className="my-4 border-t border-gray-100 dark:border-gray-800/60 pt-2" />
@@ -229,16 +243,19 @@ export default function Sidebar({ onAction }: { onAction?: () => void }) {
       {/* 2. SPUŠTENI DIO: UPRAVLJANJE APLIKACIJOM (Tema i Odjava) */}
       <div className="space-y-2 pt-4 border-t border-gray-100 dark:border-gray-800">
         {/* Prebacivanje teme */}
-        <button
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all w-full text-left"
-        >
-          {theme === 'dark' ? (
-            <><SunIcon className="w-5 h-5 text-amber-500" /><span>Svijetli način</span></>
-          ) : (
-            <><MoonIcon className="w-5 h-5 text-blue-600" /><span>Tamni način</span></>
-          )}
-        </button>
+        {/* Prebacivanje teme - SADA SIGURNO PROVJERAVA MOUNTED SAMO NA OVOM MJESTU */}
+        {mounted && (
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all w-full text-left"
+          >
+            {theme === 'dark' ? (
+              <><SunIcon className="w-5 h-5 text-amber-500" /><span>Svijetli način</span></>
+            ) : (
+              <><MoonIcon className="w-5 h-5 text-blue-600" /><span>Tamni način</span></>
+            )}
+          </button>
+        )}
 
         {/* Gumb za odjavu */}
           {/* Gumb za odjavu - SADA DISKRETAN I UGODAN ZA OKO */}
@@ -262,3 +279,4 @@ export default function Sidebar({ onAction }: { onAction?: () => void }) {
   );
 }
 
+}
