@@ -1,6 +1,8 @@
 import { supabase } from '@/utils/supabase';
 import CjenikPrikaz from './CjenikPrikaz'; 
 
+export const dynamic = 'force-dynamic';
+
 async function getCjenikPodaci(tvrtkaId: number) {
   const { data: artikli } = await supabase
     .from('artikli')
@@ -54,11 +56,10 @@ export default async function Home() {
 
   const { artikli, grupe, firma } = await getCjenikPodaci(trenutnaTvrtkaId);
 
+  // Uočite: Ovdje je maknut <LayoutKontejner> omotač jer ga već drži krovni layout.tsx!
   return (
-    <main className="w-full pt-2">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <CjenikPrikaz pocetniArtikli={artikli} grupe={grupe} firma={firma} tvrtkaId={trenutnaTvrtkaId} />
-      </div>
-    </main>
+    <div className="w-full max-w-7xl mx-auto space-y-6">
+      <CjenikPrikaz pocetniArtikli={artikli} grupe={grupe} firma={firma} tvrtkaId={trenutnaTvrtkaId} />
+    </div>
   );
 }

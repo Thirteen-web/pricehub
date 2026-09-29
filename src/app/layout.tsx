@@ -12,13 +12,11 @@ export const metadata: Metadata = {
   description: 'Sustav za praćenje i kalkulaciju cijena',
 };
 
-// Dohvaćanje profila i uloge na serveru (neprobojna metoda)
 async function dohvatiGlobalneSaaSPodatke() {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
-    // Dohvaćamo tvrtku i ulogu običnim selectom bez .single kočnice
     const { data: profilData } = await supabase
       .from('korisnici_profili')
       .select('tvrtka_id, uloga')
@@ -59,7 +57,6 @@ export default async function RootLayout({
     <html lang="hr" suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>
-          {/* Prosljeđujemo i ulogu i firmu direktno sa servera u layout */}
           <LayoutKontejner firma={firma} uloga={ulogaKorisnika}>
             {children}
           </LayoutKontejner>

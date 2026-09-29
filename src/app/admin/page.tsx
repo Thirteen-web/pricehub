@@ -49,8 +49,11 @@ export default function AdminPage() {
   const inputStil = "w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 bg-gray-50/50 dark:bg-gray-800 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60 dark:focus:ring-blue-900/30 focus:bg-white dark:focus:bg-gray-900 transition-all font-medium placeholder-gray-400";
 
   return (
-    <main className="w-full pt-2">
-      <div className="max-w-3xl mx-auto space-y-6">
+    // 1. KROVNI OMOTAČ: Dodana klasa items-start koja prisiljava sve elemente unutar main-a na lijevu stranu
+    <main className="w-full pt-2 flex flex-col items-start justify-start">
+      
+      {/* 2. KONTEJNER FORME: Postavljen ml-0 i w-full za stabilno fiksiranje uz lijevi rub */}
+      <div className="w-full max-w-3xl ml-0 space-y-6">
         <div className="select-none">
           <h1 className="text-2xl font-bold text-gray-950 dark:text-white tracking-tight">👑 Superadmin Panel</h1>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 font-medium">Registracija novih tvrtki i automatsko generiranje njihovih zaključanih cjenika</p>

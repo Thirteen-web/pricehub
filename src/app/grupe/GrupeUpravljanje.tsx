@@ -63,19 +63,19 @@ export default function GrupeUpravljanje({ pocetneGrupe, tvrtkaId }: GrupeUpravl
   const inputStil = "w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 bg-gray-50/50 dark:bg-gray-800 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60 dark:focus:ring-blue-900/30 focus:bg-white dark:focus:bg-gray-900 transition-all duration-200 font-medium placeholder-gray-400";
 
   return (
-    <div className="space-y-6 w-full max-w-full">
-
-       {/* NASLOV SEKCIJE - VRACEN ZA SAVRSEN VIZUALNI IDENTITET */}
+    <div className="w-full space-y-6 animate-in fade-in duration-200">
+      
+      {/* 1. ČISTI NASLOV SEKCIJE - OVDJE NE SMIJE BITI NIKAKAV LOGO NI PODACI O OBRTU! */}
       <div className="select-none">
         <h1 className="text-2xl font-bold text-gray-950 dark:text-white tracking-tight">Grupe proizvoda</h1>
         <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 font-medium">Upravljanje i organizacija kategorija artikala u cjeniku</p>
       </div>
-      
-      {/* Traka s gumbom za novu grupu */}
+
+      {/* 2. TRAKA S GUMBOM ZA NOVU GRUPU */}
       <div className="flex justify-start items-center select-none">
         <button
           onClick={() => otvoriModal('dodaj')}
-          className="bg-blue-600 hover:bg-emerald-600 dark:bg-blue-600 dark:hover:bg-emerald-600 text-white font-semibold px-4 py-2.5 rounded-xl shadow-md shadow-blue-100 hover:shadow-emerald-100 dark:shadow-none transition-all flex items-center gap-2 text-sm active:scale-[0.98] group"
+          className="bg-blue-600 hover:bg-emerald-600 text-white font-semibold px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 text-sm active:scale-[0.98]"
         >
           <PlusIcon className="w-5 h-5 text-white" />
           Nova grupa proizvoda
