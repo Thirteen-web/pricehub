@@ -5,7 +5,6 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    // 1. Čitamo tvrtka_id iz URL parametra
     const { searchParams } = new URL(request.url);
     const urlTvrtkaId = searchParams.get('tvrtka_id');
 
@@ -18,15 +17,15 @@ export async function GET(request: NextRequest) {
 
     const tvrtkaId = Number(urlTvrtkaId);
 
-    // 2. Dohvaćanje artikala s multi-tenant lokotom
-    const { data: artikli } = await supabase
+    const { data: artikli, error: artError } = await supabase
       .from('artikli')
       .select('*, grupe(naziv)')
       .eq('tvrtka_id', tvrtkaId)
       .order('grupa_id', { ascending: true })
       .order('naziv', { ascending: true });
 
-    // 3. Dohvaćanje podataka o tvrtki za memorandum
+    if (artError) throw artError;
+
     const { data: tvrtkaPodaci } = await supabase
       .from('tvrtke')
       .select('naziv, adresa, oib')
@@ -37,17 +36,43 @@ export async function GET(request: NextRequest) {
     const fAdresa = tvrtkaPodaci?.adresa || 'Ulica i kućni broj, Grad';
     const fOib = tvrtkaPodaci?.oib || '00000000000';
 
-    // 4. Generiranje redova tablice iz podataka iz baze
-    const redoviTabliceHtml = (artikli || []).map((art: any) => `
-      <tr style="border-bottom: 1px solid #e2e8f0;">
-        <td style="padding: 12px 10px; font-weight: 500; color: #1a202c;">${art.naziv}</td>
-        <td style="padding: 12px 10px; color: #4a5568;">${art.grupe?.naziv || 'Ostalo'}</td>
-        <td style="padding: 12px 10px; text-align: center; color: #4a5568;">${art.normativ || '-'}</td>
-        <td style="padding: 12px 10px; text-align: right; font-weight: 700; color: #224dab;">${Number(art.cijena).toFixed(2)} €</td>
-      </tr>
-    `).join('');
+    // GENERIRANJE REDOVA S FILTRIRANIM PRIKAZOM DATUMA NAKON 02.10.2026.
+    const redoviTabliceHtml = (artikli || []).map((art: any) => {
+      const sidrenaCijenaPrikaz = art.sidrena_cijena !== null && art.sidrena_cijena !== undefined 
+        ? `${Number(art.sidrena_cijena).toFixed(2)} €` 
+        : '-';
 
-    // 5. Izrada kompletnog vizualnog A4 dokumenta (Hrvatska slova rade 100% automatski!)
+      let datumIspodCijeneHtml = '';
+      
+      if (art.datum_unosa) {
+        const datumArtikla = new Date(art.datum_unosa);
+        // STROGI ZAKONSKI PRAG: Samo datumi veći od 02.10.2026. u 23:59:59
+        const granicaUsporedbe = new Date('2026-10-02T23:59:59');
+        
+        if (datumArtikla.getTime() > granicaUsporedbe.getTime()) {
+          const formatiraniDatum = datumArtikla.toLocaleDateString('hr-HR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+          datumIspodCijeneHtml = `<div style="font-size: 11px; color: #718096; font-weight: 400; margin-top: 2px;">od: ${formatiraniDatum}</div>`;
+        }
+      }
+
+      return `
+        <tr style="border-bottom: 1px solid #e2e8f0;">
+          <td style="padding: 12px 10px; font-weight: 500; color: #1a202c;">${art.naziv}</td>
+          <td style="padding: 12px 10px; color: #4a5568;">${art.grupe?.naziv || 'Ostalo'}</td>
+          <td style="padding: 12px 10px; text-align: center; color: #4a5568;">${art.normativ || '-'}</td>
+          <td style="padding: 12px 10px; text-align: right; color: #4a5568; font-weight: 500;">${sidrenaCijenaPrikaz}</td>
+          <td style="padding: 12px 10px; text-align: right; font-weight: 700; color: #224dab;">
+            <div>${Number(art.cijena).toFixed(2)} €</div>
+            ${datumIspodCijeneHtml}
+          </td>
+        </tr>
+      `;
+    }).join('');
+
     const htmlSadrzaj = `
       <!DOCTYPE html>
       <html lang="hr">
@@ -60,7 +85,7 @@ export async function GET(request: NextRequest) {
               padding: 50px; 
               color: #1a202c; 
               line-height: 1.5; 
-              max-width: 800px;
+              max-width: 850px;
               margin: 0 auto;
             }
             .header { display: flex; justify-content: space-between; border-bottom: 2px solid #224dab; padding-bottom: 20px; margin-bottom: 35px; }
@@ -89,10 +114,11 @@ export async function GET(request: NextRequest) {
           <table>
             <thead>
               <tr>
-                <th>Naziv artikla</th>
-                <th>Grupa proizvoda</th>
-                <th style="text-align: center;">Normativ</th>
-                <th style="text-align: right;">Cijena</th>
+                <th style="width: 32%;">Naziv artikla</th>
+                <th style="width: 23%;">Grupa proizvoda</th>
+                <th style="width: 13%; text-align: center;">Normativ</th>
+                <th style="width: 17%; text-align: right;">Cijena 10.09.26.</th>
+                <th style="width: 15%; text-align: right;">Trenutna cijena</th>
               </tr>
             </thead>
             <tbody>
@@ -100,19 +126,15 @@ export async function GET(request: NextRequest) {
             </tbody>
           </table>
           <div class="napomena">Cijene su iskazane u eurima s uključenim porezom.</div>
-          
           <script>
-            // ČAROBNA LINIJA: Automatski pokreće PDF manager preglednika u novom tabu!
             window.onload = function() {
               window.print();
             };
           </script>
-
         </body>
       </html>
     `;
 
-    // 6. KLJUČNI KORAK: Vraćamo čist HTML umjesto JSON-a!
     return new NextResponse(htmlSadrzaj, {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
