@@ -2,12 +2,12 @@
 
 export const dynamic = 'force-dynamic';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/utils/supabase';
 import PostavkeForma from './PostavkeForma';
 
-export default function PostavkePage() {
+function PostavkeSadrzaj() {
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
   const tvrtkaId = Number(searchParams.get('tvrtka_id') || '1');
@@ -23,15 +23,10 @@ export default function PostavkePage() {
   useEffect(() => {
     async function ucitajPostavke() {
       try {
-        // POVLAČIMO PODATKE IZRAVNO PREKO URL IDENTIFIKATORA
-        const { data: tvrtkaData, error: tvrtkaError } = await supabase
+        const { data: tvrtkaData } = await supabase
           .from('tvrtke')
           .select('naziv, adresa, oib, napomena')
           .eq('id', tvrtkaId);
-
-        if (tvrtkaError) {
-          console.error('Supabase RLS greška pri dohvatu tvrtke:', tvrtkaError.message);
-        }
 
         if (tvrtkaData && tvrtkaData.length > 0) {
           setPostavke({
@@ -42,8 +37,8 @@ export default function PostavkePage() {
             zakonska_napomena: tvrtkaData[0].napomena || 'Cijene su iskazane u eurima s uključenim porezom.'
           });
         }
-      } catch (error: any) {
-        console.error('Sistemska greška:', error.message);
+      } catch (error) {
+        console.error('Greška pri dohvaćanju postavki tvrtke:', error);
       } finally {
         setLoading(false);
       }
@@ -55,11 +50,7 @@ export default function PostavkePage() {
   }, [tvrtkaId]);
 
   if (loading) {
-    return (
-      <div className="p-8 text-sm font-semibold text-gray-400 select-none animate-pulse">
-        Učitavanje postavki sustava...
-      </div>
-    );
+    return <div className="p-8 text-sm font-semibold text-gray-400 select-none animate-pulse">Učitavanje postavki...</div>;
   }
 
   return (
@@ -72,5 +63,13 @@ export default function PostavkePage() {
         <PostavkeForma pocetnePostavke={postavke} />
       </div>
     </main>
+  );
+}
+
+export default function PostavkePage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-sm font-semibold text-gray-400">Učitavanje stranice...</div>}>
+      <PostavkeSadrzaj />
+    </Suspense>
   );
 }

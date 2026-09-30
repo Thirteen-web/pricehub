@@ -2,23 +2,21 @@
 
 export const dynamic = 'force-dynamic';
 
-import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation'; // Uvozimo čitač URL parametara
+import React, { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/utils/supabase';
 import GrupeUpravljanje from './GrupeUpravljanje';
 
-export default function GrupePage() {
+function GrupeSadrzaj() {
   const [loading, setLoading] = useState(true);
   const [grupe, setGrupe] = useState<any[]>([]);
   
   const searchParams = useSearchParams();
-  // Čitamo tvrtka_id izravno iz URL-a, uz fallback na 1
   const tvrtkaId = Number(searchParams.get('tvrtka_id') || '1');
 
   useEffect(() => {
     async function ucitajGrupe() {
       try {
-        // Dohvaćamo grupe izravno preko sigurnog i preciznog URL ID-ja tvrtke!
         const { data: grupeData } = await supabase
           .from('grupe')
           .select('*')
@@ -48,5 +46,13 @@ export default function GrupePage() {
         <GrupeUpravljanje pocetneGrupe={grupe} tvrtkaId={tvrtkaId} />
       </div>
     </main>
+  );
+}
+
+export default function GrupePage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-sm font-semibold text-gray-400">Učitavanje stranice...</div>}>
+      <GrupeSadrzaj />
+    </Suspense>
   );
 }
