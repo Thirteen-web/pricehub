@@ -34,9 +34,9 @@ export default function Sidebar(props: any) {
     setMounted(true);
   }, []);
 
- // Pomoćna funkcija koja provjerava aktivnu rutu bez obzira na URL parametre (?tvrtka_id=...)
+ /// Pomoćna funkcija koja provjerava aktivnu rutu bez obzira na URL parametre (?tvrtka_id=...)
   const dobiStilGumba = (ciljanaPutanja: string) => {
-    // Čistimo pathname od eventualnih parametara radi sigurne usporedbe
+    // Uzimamo indeks [0] kako bismo dobili čisti tekst rute iz niza!
     const cistaTrenutnaPutanja = pathname.split('?')[0];
     const jeAktivna = cistaTrenutnaPutanja === ciljanaPutanja;
 
