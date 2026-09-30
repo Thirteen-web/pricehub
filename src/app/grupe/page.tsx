@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { supabase } from '@/utils/supabase';
+import { dohvatiGrupeZaTvrtku } from '../actions'; // Uvozimo našu novu serversku akciju
 import GrupeUpravljanje from './GrupeUpravljanje';
 
 function GrupeSadrzaj() {
@@ -16,24 +16,16 @@ function GrupeSadrzaj() {
 
   useEffect(() => {
     async function ucitajGrupe() {
-      try {
-        const { data: grupeData } = await supabase
-          .from('grupe')
-          .select('*')
-          .eq('tvrtka_id', tvrtkaId)
-          .order('naziv', { ascending: true });
+      if (!tvrtkaId) return;
 
-        setGrupe(grupeData || []);
-      } catch (error) {
-        console.error('Greška pri učitavanju grupa:', error);
-      } finally {
-        setLoading(false);
+      const res = await dohvatiGrupeZaTvrtku(tvrtkaId);
+      if (res.success) {
+        setGrupe(res.podataci);
       }
+      setLoading(false);
     }
 
-    if (tvrtkaId) {
-      ucitajGrupe();
-    }
+    ucitajGrupe();
   }, [tvrtkaId]);
 
   if (loading) {

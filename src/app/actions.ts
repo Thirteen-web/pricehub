@@ -316,3 +316,56 @@ export async function spremiSvePostavke(data: {
     return { success: false, error: error.message };
   }
 }
+
+// 12. SERVERSKI DOHVAT GRUPA ZA ODREĐENU TVRTKU
+export async function dohvatiGrupeZaTvrtku(tvrtkaId: number) {
+  try {
+    const { data, error } = await supabase
+      .from('grupe')
+      .select('*')
+      .eq('tvrtka_id', Number(tvrtkaId))
+      .order('naziv', { ascending: true });
+
+    if (error) throw error;
+    return { success: true, podataci: data || [] };
+  } catch (error: any) {
+    console.error('Greška pri serverskom dohvatu grupa:', error);
+    return { success: false, error: error.message, podataci: [] };
+  }
+}
+
+// 13. SERVERSKI DOHVAT POSTAVKI I MEMORANDUMA ZA ODREĐENU TVRTKU
+export async function dohvatiPostavkeTvrtke(tvrtkaId: number) {
+  try {
+    const { data, error } = await supabase
+      .from('tvrtke')
+      .select('naziv, adresa, oib, napomena')
+      .eq('id', Number(tvrtkaId))
+      .single();
+
+    if (error) throw error;
+    return {
+      success: true,
+      podataci: {
+        tvrtka_id: Number(tvrtkaId),
+        firma_naziv: data?.naziv || '',
+        firma_adresa: data?.adresa || '',
+        firma_oib: data?.oib || '',
+        zakonska_napomena: data?.napomena || 'Cijene su iskazane u eurima s uključenim porezom.'
+      }
+    };
+  } catch (error: any) {
+    console.error('Greška pri serverskom dohvatu postavki:', error);
+    return {
+      success: false,
+      error: error.message,
+      podataci: {
+        tvrtka_id: Number(tvrtkaId),
+        firma_naziv: '',
+        firma_adresa: '',
+        firma_oib: '',
+        zakonska_napomena: 'Cijene su iskazane u eurima s uključenim porezom.'
+      }
+    };
+  }
+}
