@@ -19,25 +19,40 @@ export default function PostavkePage() {
   useEffect(() => {
     async function ucitajPostavke() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: authData, error: authError } = await supabase.auth.getUser();
         
+        if (authError) {
+          alert('Auth greška: ' + authError.message);
+          setLoading(false);
+          return;
+        }
+
+        const user = authData?.user;
         if (user) {
-          // SIGURAN DOHVAT PROFILA BEZ .single()
-          const { data: profilData } = await supabase
+          // 1. Dohvat profila
+          const { data: profilData, error: profError } = await supabase
             .from('korisnici_profili')
             .select('tvrtka_id')
             .eq('id', user.id);
+
+          if (profError) {
+            alert('Greška profila: ' + profError.message);
+          }
 
           let tId = 1;
           if (profilData && profilData.length > 0) {
             tId = Number(profilData[0].tvrtka_id);
           }
 
-          // SIGURAN DOHVAT TVRTKE BEZ .single()
-          const { data: tvrtkaData } = await supabase
+          // 2. Dohvat tvrtke
+          const { data: tvrtkaData, error: tvrtkaError } = await supabase
             .from('tvrtke')
             .select('naziv, adresa, oib, napomena')
             .eq('id', tId);
+
+          if (tvrtkaError) {
+            alert('Greška tvrtke: ' + tvrtkaError.message);
+          }
 
           if (tvrtkaData && tvrtkaData.length > 0) {
             setPostavke({
@@ -48,9 +63,11 @@ export default function PostavkePage() {
               zakonska_napomena: tvrtkaData[0].napomena || 'Cijene su iskazane u eurima s uključenim porezom.'
             });
           }
+        } else {
+          alert('Korisnik nije ulogiran prema klijentskom Supabase-u!');
         }
-      } catch (error) {
-        console.error('Greška pri učitavanju postavki:', error);
+      } catch (error: any) {
+        alert('Neočekivani sistemski krah: ' + error.message);
       } finally {
         setLoading(false);
       }
