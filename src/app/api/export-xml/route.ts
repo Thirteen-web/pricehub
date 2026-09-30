@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/utils/supabase';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,11 +17,11 @@ export async function GET(request: NextRequest) {
 
     const tvrtkaId = Number(urlTvrtkaId);
 
-    // 2. Dohvaćanje artikala s multi-tenant lokotom
+   // 2. Dohvaćanje artikala – STROGO FILTRIRANO ZA OVU TVRTKU!
     const { data: artikli, error } = await supabase
       .from('artikli')
       .select('*, grupe(naziv)')
-      .eq('tvrtka_id', tvrtkaId) // Multi-tenant lokot!
+      .eq('tvrtka_id', tvrtkaId) // <--- OBAVEZNO DODAJTE OVU LINIJU!
       .order('grupa_id', { ascending: true })
       .order('naziv', { ascending: true });
 

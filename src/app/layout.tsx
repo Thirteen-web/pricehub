@@ -70,7 +70,12 @@ export default async function RootLayout({
       <body className={inter.className}>
         <Providers>
           {/* Šaljemo sve izračunate podatke s vrha izravno u LayoutKontejner */}
-          <LayoutKontejner firma={firma} uloga={ulogaKorisnika} imaPodataka={imaPodatakaKorisnika}>
+       <LayoutKontejner 
+            firma={firma} 
+            uloga={ulogaKorisnika} 
+            imaPodataka={imaPodatakaKorisnika} 
+            tvrtkaId={saasPodaci?.tvrtkaId}
+          >
             {children}
           </LayoutKontejner>
         </Providers>

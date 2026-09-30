@@ -9,12 +9,14 @@ export default function LayoutKontejner({
   children, 
   firma, 
   uloga, 
-  imaPodataka = false 
+  imaPodataka = false,
+  tvrtkaId // <--- 1. POPRAVAK: Primamo varijablu izravno u destrukturiranju!
 }: { 
   children: React.ReactNode; 
   firma?: { naziv: string; adresa: string; oib: string }; 
   uloga?: string | null; 
-  imaPodataka?: boolean 
+  imaPodataka?: boolean;
+  tvrtkaId?: number; // <--- 2. POPRAVAK: Definiramo TypeScript tip podatka!
 }) {
   const pathname = usePathname();
   const [sidebarOtvoren, setSidebarOtvoren] = useState(false);
@@ -78,10 +80,11 @@ export default function LayoutKontejner({
             ${isMounted && sidebarOtvoren ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
           `}
         >
-          <Sidebar onAction={() => setSidebarOtvoren(false)} uloga={uloga} imaPodataka={imaPodataka} />
+          {/* SADA JE tvrtkaId 100% ISPRAVAN I PREPOZNAT! */}
+          <Sidebar onAction={() => setSidebarOtvoren(false)} uloga={uloga} imaPodataka={imaPodataka} tvrtkaId={tvrtkaId} />
         </aside>
 
-        {/* Mobilni zatamnjeni overlay - vidljiv samo kad je isMounted i otvoren */}
+        {/* Mobilni zatamnjeni overlay */}
         {isMounted && sidebarOtvoren && (
           <div 
             onClick={() => setSidebarOtvoren(false)} 
@@ -89,7 +92,7 @@ export default function LayoutKontejner({
           />
         )}
 
-        {/* DESNI RADNI PROSTOR (MAIN CHILDREN) */}
+        {/* DESNI RADNI PROSTOR */}
         <main className="flex-1 p-4 md:p-8 max-w-full overflow-x-hidden md:pl-72 bg-slate-50 dark:bg-slate-900 transition-colors">
           {children}
         </main>

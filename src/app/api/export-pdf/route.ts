@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/utils/supabase';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 export async function GET(request: NextRequest) {
   try {
+    // 1. Čitamo tvrtka_id iz URL parametra
     const { searchParams } = new URL(request.url);
     const urlTvrtkaId = searchParams.get('tvrtka_id');
 
@@ -16,27 +19,30 @@ export async function GET(request: NextRequest) {
     }
 
     const tvrtkaId = Number(urlTvrtkaId);
-
+    
+    // 2. Dohvaćanje artikala – STROGO FILTRIRANO ZA OVU TVRTKU!
     const { data: artikli, error: artError } = await supabase
       .from('artikli')
       .select('*, grupe(naziv)')
-      .eq('tvrtka_id', tvrtkaId)
+      .eq('tvrtka_id', tvrtkaId) // <--- OVA LINIJA MORA BITI TU!
       .order('grupa_id', { ascending: true })
       .order('naziv', { ascending: true });
 
     if (artError) throw artError;
 
+    // 3. Dohvaćanje podataka o tvrtki za memorandum
     const { data: tvrtkaPodaci } = await supabase
       .from('tvrtke')
-      .select('naziv, adresa, oib')
+      .select('naziv, adresa, oib, napomena')
       .eq('id', tvrtkaId)
       .single();
 
     const fNaziv = tvrtkaPodaci?.naziv || 'Naziv tvrtke d.o.o.';
     const fAdresa = tvrtkaPodaci?.adresa || 'Ulica i kućni broj, Grad';
     const fOib = tvrtkaPodaci?.oib || '00000000000';
+    const fNapomena = tvrtkaPodaci?.napomena || 'Cijene su iskazane u eurima s uključenim porezom.';
 
-    // GENERIRANJE REDOVA S FILTRIRANIM PRIKAZOM DATUMA NAKON 02.10.2026.
+    // 4. Generiranje redova tablice iz podataka s filtriranim datumom
     const redoviTabliceHtml = (artikli || []).map((art: any) => {
       const sidrenaCijenaPrikaz = art.sidrena_cijena !== null && art.sidrena_cijena !== undefined 
         ? `${Number(art.sidrena_cijena).toFixed(2)} €` 
@@ -46,7 +52,6 @@ export async function GET(request: NextRequest) {
       
       if (art.datum_unosa) {
         const datumArtikla = new Date(art.datum_unosa);
-        // STROGI ZAKONSKI PRAG: Samo datumi veći od 02.10.2026. u 23:59:59
         const granicaUsporedbe = new Date('2026-10-02T23:59:59');
         
         if (datumArtikla.getTime() > granicaUsporedbe.getTime()) {
@@ -125,7 +130,7 @@ export async function GET(request: NextRequest) {
               ${redoviTabliceHtml}
             </tbody>
           </table>
-          <div class="napomena">Cijene su iskazane u eurima s uključenim porezom.</div>
+           <div class="napomena">${fNapomena}</div>
           <script>
             window.onload = function() {
               window.print();

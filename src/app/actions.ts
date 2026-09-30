@@ -96,44 +96,7 @@ export async function prijavaKorisnika(email: string, lozinka: string) {
   
   return { success: true, token: data.session?.access_token, maxAge: data.session?.expires_in };
 }
-// 7. AKCIJA ZA SPREMANJE PODATAKA O TVRTKI (SADA SVAKA TVRTKA UPSEŠNO UPDATEA SVOJ REDAK)
-export async function spremiSvePostavke(data: {
-  tvrtka_id: number;
-  firma_naziv: string;
-  firma_adresa: string;
-  firma_oib: string;
-  zakonska_napomena: string; // Zakonsku napomenu i dalje držimo u 'postavke' ili tvrtke tablici
-}) {
-  try {
-    // 1. Ažuriramo memorandum izravno unutar nove tablice 'tvrtke'
-    const { error: tvrtkaError } = await supabase
-      .from('tvrtke')
-      .update({
-        naziv: data.firma_naziv,
-        adresa: data.firma_adresa,
-        oib: data.firma_oib
-      })
-      .eq('id', data.tvrtka_id);
 
-    if (tvrtkaError) throw tvrtkaError;
-
-    // 2. Ažuriramo zakonsku napomenu u tablici 'postavke' za tu tvrtku
-    const { error: postavkeError } = await supabase
-      .from('postavke')
-      .update({ vrijednost: data.zakonska_napomena })
-      .eq('kljuc', 'zakonska_napomena')
-      .eq('tvrtka_id', data.tvrtka_id);
-
-    if (postavkeError) throw postavkeError;
-
-    revalidatePath('/postavke');
-    revalidatePath('/'); 
-    return { success: true };
-  } catch (error: any) {
-    console.error('Greška pri spremanju postavki tvrtke:', error);
-    return { success: false, error: error.message };
-  }
-}
 // 8. SUPERADMIN AKCIJA: KREIRANJE NOVE TVRTKE I KORISNIKA IZAPLIKACIJE
 export async function kreirajNovuTvrtkuIKorisnika(data: {
   naziv_tvrtke: string;
@@ -201,4 +164,155 @@ export async function kreirajNovuTvrtkuIKorisnika(data: {
   }
 }
 
+// 10. PAMETNI MULTI-TENANT UPSERT UVOZ S ZAŠTITOM OD DUPLIH REDAKA IZ CSV-A
+export async function uvoziArtikleIzTablice(data: {
+  tvrtka_id: number;
+  artikli: Array<{ naziv: string; cijena: number; grupa_naziv: string; normativ?: string }>;
+}) {
+  try {
+    const tvrtkaId = Number(data.tvrtka_id);
+    const fiksniDatum = "2026-10-01T00:00:00+00:00";
 
+    // 1. KORAK: Filtriranje duplih artikala unutar SAME uvezene datoteke (Uzima se zadnji unosi)
+    const jedinstveniArtikliIzDatoteke: Record<string, typeof data.artikli[0]> = {};
+    data.artikli.forEach(art => {
+      const kljuc = art.naziv.trim().toLowerCase();
+      if (kljuc) {
+        jedinstveniArtikliIzDatoteke[kljuc] = art;
+      }
+    });
+
+    // Pretvaramo očišćenu mapu natrag u niz za daljnju standardnu obradu
+    const cistiArtikliIzDatoteke = Object.values(jedinstveniArtikliIzDatoteke);
+
+    // A) Dohvat i mapiranje postojećih grupa
+    const { data: postojeceGrupe } = await supabase
+      .from('grupe')
+      .select('id, naziv')
+      .eq('tvrtka_id', tvrtkaId);
+
+    const mapaGrupa: Record<string, number> = {};
+    if (postojeceGrupe) {
+      postojeceGrupe.forEach(g => { mapaGrupa[g.naziv.toLowerCase().trim()] = g.id; });
+    }
+    let ostaloGrupaId = mapaGrupa['ostalo'] || null;
+
+    // B) Dohvat i mapiranje postojećih artikala zbog Upsert provjere
+    const { data: postojeciArtikli } = await supabase
+      .from('artikli')
+      .select('id, naziv, cijena, normativ')
+      .eq('tvrtka_id', tvrtkaId);
+
+    const mapaArtikala: Record<string, { id: number; cijena: number; normativ: string }> = {};
+    if (postojeciArtikli) {
+      postojeciArtikli.forEach(a => {
+        mapaArtikala[a.naziv.toLowerCase().trim()] = { id: a.id, cijena: Number(a.cijena), normativ: a.normativ || '' };
+      });
+    }
+
+    const artikliZaUpis: any[] = [];
+    const artikliZaAzuriranje: any[] = [];
+
+    // C) Inteligentna petlja kroz OČIŠĆENE i jedinstvene artikle
+    for (const art of cistiArtikliIzDatoteke) {
+      const cistoImeArtikla = art.naziv.trim();
+      const kljucArtikla = cistoImeArtikla.toLowerCase();
+      if (!cistoImeArtikla) continue;
+
+      let cistoImeGrupe = art.grupa_naziv ? art.grupa_naziv.trim() : 'Ostalo';
+      let kljucGrupe = cistoImeGrupe.toLowerCase();
+      let ispravanGrupaId: number;
+
+      if (mapaGrupa[kljucGrupe]) {
+        ispravanGrupaId = mapaGrupa[kljucGrupe];
+      } else {
+        if (kljucGrupe === 'ostalo' && ostaloGrupaId) {
+          ispravanGrupaId = ostaloGrupaId;
+        } else {
+          const { data: novaGrupa, error: gErr } = await supabase
+            .from('grupe')
+            .insert([{ naziv: cistoImeGrupe, tvrtka_id: tvrtkaId }])
+            .select().single();
+
+          if (gErr) throw gErr;
+          ispravanGrupaId = novaGrupa.id;
+          mapaGrupa[kljucGrupe] = novaGrupa.id;
+          if (kljucGrupe === 'ostalo') ostaloGrupaId = novaGrupa.id;
+        }
+      }
+
+      const trenutniNormativ = art.normativ ? art.normativ.trim() : 'kom';
+
+      // SADA VIŠE NEMA ŠANSE ZA ON CONFLICT DUPLIRANJE!
+      if (mapaArtikala[kljucArtikla]) {
+        if (mapaArtikala[kljucArtikla].cijena !== art.cijena || mapaArtikala[kljucArtikla].normativ !== trenutniNormativ) {
+          artikliZaAzuriranje.push({
+            id: mapaArtikala[kljucArtikla].id,
+            naziv: cistoImeArtikla,
+            cijena: art.cijena,
+            normativ: trenutniNormativ,
+            grupa_id: ispravanGrupaId,
+            tvrtka_id: tvrtkaId
+          });
+        }
+      } else {
+        artikliZaUpis.push({
+          naziv: cistoImeArtikla,
+          cijena: art.cijena,
+          sidrena_cijena: art.cijena,
+          normativ: trenutniNormativ,
+          datum_unosa: fiksniDatum,
+          grupa_id: ispravanGrupaId,
+          tvrtka_id: tvrtkaId
+        });
+      }
+    }
+
+    // D) Masovni upis i ažuriranje u bazi podataka
+    if (artikliZaUpis.length > 0) {
+      const { error: insErr } = await supabase.from('artikli').insert(artikliZaUpis);
+      if (insErr) throw insErr;
+    }
+
+    if (artikliZaAzuriranje.length > 0) {
+      const { error: updErr } = await supabase.from('artikli').upsert(artikliZaAzuriranje);
+      if (updErr) throw updErr;
+    }
+
+    return { success: true, unesenih: artikliZaUpis.length, azuriranih: artikliZaAzuriranje.length };
+  } catch (error: any) {
+    console.error('Greška u serverskom uvozu cjenika:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+
+// 11. SIGURNO MULTI-TENANT SPREMANJE SVIH POSTAVKI I NAPOMENE U TABLICU TVRTKE
+export async function spremiSvePostavke(data: {
+  tvrtka_id: number;
+  firma_naziv: string;
+  firma_adresa: string;
+  firma_oib: string;
+  zakonska_napomena: string;
+}) {
+  try {
+    const tvrtkaId = Number(data.tvrtka_id);
+
+    // Sve podatke (uključujući i novu zakonsku napomenu) spremamo izravno u redak tvrtke!
+    const { error } = await supabase
+      .from('tvrtke')
+      .update({
+        naziv: data.firma_naziv.trim(),
+        adresa: data.firma_adresa.trim(),
+        oib: data.firma_oib.trim(),
+        napomena: data.zakonska_napomena.trim() // <--- SPREMANJE U NOVI STUPAC!
+      })
+      .eq('id', tvrtkaId);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    console.error('Greška pri spremanju svih postavki tvrtke:', error);
+    return { success: false, error: error.message };
+  }
+}

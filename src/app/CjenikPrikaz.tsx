@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'; // <--- Dodano ', useEffect'
 import { Artikli, Grupe } from '@/types/database.types';
 import ArtiklModal from './ArtiklModal';
 import Link from 'next/link'; // <--- Ovdje uvozimo Link za navigaciju
+import PametniUvozModal from './PametniUvozModal';
 import { 
   PlusIcon, 
   MagnifyingGlassIcon,
@@ -31,6 +32,11 @@ export default function CjenikPrikaz({ pocetniArtikli, grupe, firma, tvrtkaId  }
   const maxStavkiPoStranici = 10;
     // Stanje za praćenje otvorenog mobilnog mini-izbornika s tri točkice
   const [otvoreniMeniArtiklId, setOtvoreniMeniArtiklId] = useState<number | null>(null);
+const [isUvozOpen, setIsUvozOpen] = useState(false); 
+
+  const osvjeziPodatke = async () => {
+    window.location.reload(); // Automatsko osvježavanje ekrana nakon uspješnog uvoza
+  };
 
   // STANJA ZA MODAL
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -104,6 +110,16 @@ export default function CjenikPrikaz({ pocetniArtikli, grupe, firma, tvrtkaId  }
       
       {/* 2. POSEBAN RED ZA GLAVNI GUMB: Točno kao na snimci zaslona */}
       <div className="flex justify-start items-center pt-2">
+      
+        {/* NOVI GUMB ZA PAMETNI UVOZ CJENIKA */}
+          <button
+            onClick={() => setIsUvozOpen(true)}
+            className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold px-4 py-2.5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-all flex items-center gap-2 text-sm active:scale-[0.98] mr-3"
+          >
+            <span className="text-base">📥</span>
+            <span>Pametni uvoz cjenika</span>
+          </button>
+
         <button
           onClick={() => otvoriModal('dodaj')}
           className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold px-4 py-2.5 rounded-xl shadow-md shadow-blue-100 dark:shadow-none transition-all flex items-center gap-2 text-sm active:scale-[0.98]"
@@ -365,6 +381,11 @@ export default function CjenikPrikaz({ pocetniArtikli, grupe, firma, tvrtkaId  }
         grupe={grupe}
         tvrtkaId={tvrtkaId} 
       />
+
+        {/* 3. NOVI POZIV MODALA NA SAMOM DNUKODA */}
+      <PametniUvozModal isOpen={isUvozOpen} onClose={() => setIsUvozOpen(false)} tvrtkaId={tvrtkaId} onUspjeh={osvjeziPodatke} />
+
+
     </div>
   );
 }

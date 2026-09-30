@@ -17,11 +17,18 @@ import {
 } from '@heroicons/react/24/outline';
 import { supabase } from '@/utils/supabase';
 
-// POPRAVAK: Primamo tvrtkaId izravno u parametrima funkcije
-export default function Sidebar({ onAction, uloga, imaPodataka, tvrtkaId }: any) {
+export default function Sidebar(props: any) {
+  
+  // 2. RUČNO IZVLAČIMO VARIJABLE IZ PROPSA DA NE BUDU UNDEFINED:
+  const onAction = props.onAction;
+  const uloga = props.uloga;
+  const imaPodataka = props.imaPodataka;
+  const tvrtkaId = props.tvrtkaId; // <--- SADA JE OVA VARIJABLA 100% TOČNA I ŽIVA!
+
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [generiramPdf, setGeneriramPdf] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -66,24 +73,17 @@ export default function Sidebar({ onAction, uloga, imaPodataka, tvrtkaId }: any)
 
         <div className="my-4 border-t border-gray-100 dark:border-gray-800/60 pt-2" />
 
-        {/* PDF GUMB - Otvara novi tab i šalje tvrtka_id parametar */}
-        {!imaPodataka ? (
-          <div className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-400 dark:text-gray-600 opacity-40 cursor-not-allowed select-none">
-            <PrinterIcon className="w-5 h-5 text-gray-300 dark:text-gray-700" />
-            <span>Ispis cjenika (PDF)</span>
-          </div>
-        ) : (
-          <a 
-            href={`/api/export-pdf?tvrtka_id=${tvrtkaId || 1}`} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            onClick={onAction}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all group w-full text-left"
-          >
-            <PrinterIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
-            <span>Ispis cjenika (PDF)</span>
-          </a>
-        )}
+         {/* PDF GUMB - Dodan timestamp (&t=...) za potpuno uništenje cachea u pregledniku */}
+        <a 
+          href={`/api/export-pdf?tvrtka_id=${tvrtkaId}&t=${Date.now()}`} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          onClick={onAction}
+          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all group w-full text-left"
+        >
+          <PrinterIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+          <span>Ispis cjenika (PDF)</span>
+        </a>
 
          {/* CSV GUMB - Sada ispravno prosljeđuje tvrtka_id parametar na backend */}
         {!imaPodataka ? (
@@ -93,7 +93,7 @@ export default function Sidebar({ onAction, uloga, imaPodataka, tvrtkaId }: any)
           </div>
         ) : (
           <Link 
-            href={`/api/export-csv?tvrtka_id=${tvrtkaId || 1}`} 
+            href={`/api/export-csv?tvrtka_id=${tvrtkaId}`}
             onClick={onAction} 
             className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all group w-full text-left"
           >
@@ -110,7 +110,7 @@ export default function Sidebar({ onAction, uloga, imaPodataka, tvrtkaId }: any)
           </div>
         ) : (
           <Link 
-            href={`/api/export-xml?tvrtka_id=${tvrtkaId || 1}`} 
+            href={`/api/export-xml?tvrtka_id=${tvrtkaId}`} 
             onClick={onAction} 
             className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all group w-full text-left"
           >
