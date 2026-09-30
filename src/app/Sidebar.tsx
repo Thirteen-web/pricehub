@@ -34,11 +34,12 @@ export default function Sidebar(props: any) {
     setMounted(true);
   }, []);
 
- /// Pomoćna funkcija koja provjerava aktivnu rutu bez obzira na URL parametre (?tvrtka_id=...)
+  // Pomoćna funkcija koja provjerava aktivnu rutu pomoću startsWith metode
   const dobiStilGumba = (ciljanaPutanja: string) => {
-    // Uzimamo indeks [0] kako bismo dobili čisti tekst rute iz niza!
-    const cistaTrenutnaPutanja = pathname.split('?')[0];
-    const jeAktivna = cistaTrenutnaPutanja === ciljanaPutanja;
+    // Ako smo na početnoj stranici (/) tražimo točno poklapanje, za ostale rute gledamo samo početak!
+    const jeAktivna = ciljanaPutanja === '/' 
+      ? pathname === '/' 
+      : pathname.startsWith(ciljanaPutanja);
 
     if (jeAktivna) {
       return "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 transition-all group w-full text-left";
