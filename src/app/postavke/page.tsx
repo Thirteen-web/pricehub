@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation'; // Uvozimo čitač URL parametara
+import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/utils/supabase';
 import PostavkeForma from './PostavkeForma';
 
@@ -23,11 +23,15 @@ export default function PostavkePage() {
   useEffect(() => {
     async function ucitajPostavke() {
       try {
-        // Dohvaćamo memorandum tvrtke izravno preko sigurnog URL ID-ja!
-        const { data: tvrtkaData } = await supabase
+        // POVLAČIMO PODATKE IZRAVNO PREKO URL IDENTIFIKATORA
+        const { data: tvrtkaData, error: tvrtkaError } = await supabase
           .from('tvrtke')
           .select('naziv, adresa, oib, napomena')
           .eq('id', tvrtkaId);
+
+        if (tvrtkaError) {
+          console.error('Supabase RLS greška pri dohvatu tvrtke:', tvrtkaError.message);
+        }
 
         if (tvrtkaData && tvrtkaData.length > 0) {
           setPostavke({
@@ -38,8 +42,8 @@ export default function PostavkePage() {
             zakonska_napomena: tvrtkaData[0].napomena || 'Cijene su iskazane u eurima s uključenim porezom.'
           });
         }
-      } catch (error) {
-        console.error('Greška pri dohvaćanju postavki tvrtke:', error);
+      } catch (error: any) {
+        console.error('Sistemska greška:', error.message);
       } finally {
         setLoading(false);
       }
@@ -51,7 +55,11 @@ export default function PostavkePage() {
   }, [tvrtkaId]);
 
   if (loading) {
-    return <div className="p-8 text-sm font-semibold text-gray-400 select-none animate-pulse">Učitavanje postavki...</div>;
+    return (
+      <div className="p-8 text-sm font-semibold text-gray-400 select-none animate-pulse">
+        Učitavanje postavki sustava...
+      </div>
+    );
   }
 
   return (
