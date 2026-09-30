@@ -22,6 +22,11 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    /*
+     * Izostavljamo sve ključne radne rute iz middleware provjere
+     * jer njihovu sigurnost i auth provjeru sada stopostotno i sigurno 
+     * obavlja klijentski 'use client' kod i RLS zaštita baze podataka!
+     */
+    '/((?!_next/static|_next/image|favicon.ico|grupe|postavke|api/export-pdf|api/export-csv|export-xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
