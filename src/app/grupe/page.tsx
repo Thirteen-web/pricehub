@@ -18,10 +18,10 @@ export default async function GrupePage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   // Ako korisnik nije ulogiran, preusmjeravamo ga na login ekran
-  if (!user) {
-    const { redirect } = await import('next/navigation');
-    redirect('/login');
-  }
+  //  if (!user) {
+  //    const { redirect } = await import('next/navigation');
+   //   redirect('/login');
+  //  }
 
   // 2. Dohvat profila korisnika kako bismo saznali ID njegove tvrtke
   const { data: profil } = await supabase
