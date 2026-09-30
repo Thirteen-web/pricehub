@@ -3,17 +3,14 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useEffect, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { dohvatiPostavkeTvrtke } from '../actions'; // Uvozimo našu novu serversku akciju
+import { dohvatiPostavkeTvrtke } from '../actions';
 import PostavkeForma from './PostavkeForma';
 
 function PostavkeSadrzaj() {
   const [loading, setLoading] = useState(true);
-  const searchParams = useSearchParams();
-  const tvrtkaId = Number(searchParams.get('tvrtka_id') || '1');
-
+  
   const [postavke, setPostavke] = useState({
-    tvrtka_id: tvrtkaId,
+    tvrtka_id: 1,
     firma_naziv: '',
     firma_adresa: '',
     firma_oib: '',
@@ -22,18 +19,24 @@ function PostavkeSadrzaj() {
 
   useEffect(() => {
     async function ucitajPostavke() {
-      if (!tvrtkaId) return;
-      
-      // Pozivamo sigurnu serversku akciju koja trenutno zaobilazi RLS kočnice
-      const res = await dohvatiPostavkeTvrtke(tvrtkaId);
-      if (res.success && res.podataci) {
-        setPostavke(res.podataci);
+      try {
+        // Nativni dohvat parametara iz URL trake preglednika - stopostotna klijentska točnost
+        const params = new URLSearchParams(window.location.search);
+        const tId = Number(params.get('tvrtka_id') || '1');
+
+        const res = await dohvatiPostavkeTvrtke(tId);
+        if (res.success && res.podataci) {
+          setPostavke(res.podataci);
+        }
+      } catch (error) {
+        console.error('Greška pri dohvaćanju postavki tvrtke:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
 
     ucitajPostavke();
-  }, [tvrtkaId]);
+  }, []); // Prazan niz osigurava da se učitavanje odvrti točno JEDNOM bez beskonačnih petlji!
 
   if (loading) {
     return (
@@ -58,7 +61,7 @@ function PostavkeSadrzaj() {
 
 export default function PostavkePage() {
   return (
-    <Suspense fallback={<div className="p-8 text-sm font-semibold text-gray-400">Učitavanje stranice...</div>}>
+    <Suspense fallback={<div className="p-8 text-sm font-semibold text-gray-400">Učitavanje...</div>}>
       <PostavkeSadrzaj />
     </Suspense>
   );

@@ -3,30 +3,35 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useEffect, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { dohvatiGrupeZaTvrtku } from '../actions'; // Uvozimo našu novu serversku akciju
+import { dohvatiGrupeZaTvrtku } from '../actions';
 import GrupeUpravljanje from './GrupeUpravljanje';
 
 function GrupeSadrzaj() {
   const [loading, setLoading] = useState(true);
   const [grupe, setGrupe] = useState<any[]>([]);
-  
-  const searchParams = useSearchParams();
-  const tvrtkaId = Number(searchParams.get('tvrtka_id') || '1');
+  const [tvrtkaId, setTvrtkaId] = useState<number>(1);
 
   useEffect(() => {
     async function ucitajGrupe() {
-      if (!tvrtkaId) return;
+      try {
+        // Nativni i nepogrešivi dohvat parametara iz preglednika - eliminira race condition!
+        const params = new URLSearchParams(window.location.search);
+        const tId = Number(params.get('tvrtka_id') || '1');
+        setTvrtkaId(tId);
 
-      const res = await dohvatiGrupeZaTvrtku(tvrtkaId);
-      if (res.success) {
-        setGrupe(res.podataci);
+        const res = await dohvatiGrupeZaTvrtku(tId);
+        if (res.success && res.podataci) {
+          setGrupe(res.podataci);
+        }
+      } catch (error) {
+        console.error('Greška pri učitavanju grupa:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
 
     ucitajGrupe();
-  }, [tvrtkaId]);
+  }, []); // Prazan niz [] osigurava da se funkcija odvrti točno JEDNOM pri učitavanju stranice!
 
   if (loading) {
     return <div className="p-8 text-sm font-semibold text-gray-400 select-none animate-pulse">Učitavanje grupa...</div>;
