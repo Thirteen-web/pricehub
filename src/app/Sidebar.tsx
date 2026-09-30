@@ -32,14 +32,16 @@ export default function Sidebar(props: any) {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
-
-  // Pomoćna funkcija koja provjerava aktivnu rutu pomoću startsWith metode
+  }, [])
+  
   const dobiStilGumba = (ciljanaPutanja: string) => {
-    // Ako smo na početnoj stranici (/) tražimo točno poklapanje, za ostale rute gledamo samo početak!
+    // Dijagnostički ispis u konzolu preglednika (F12) da vidimo točnu putanju
+    console.log("Trenutni pathname:", pathname, "Ciljana putanja:", ciljanaPutanja);
+
+    // Sigurna provjera koja pokriva i točno poklapanje i podstringove
     const jeAktivna = ciljanaPutanja === '/' 
       ? pathname === '/' 
-      : pathname.startsWith(ciljanaPutanja);
+      : (pathname === ciljanaPutanja || pathname.includes(ciljanaPutanja));
 
     if (jeAktivna) {
       return "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 transition-all group w-full text-left";
