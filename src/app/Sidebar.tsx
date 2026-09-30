@@ -54,12 +54,12 @@ export default function Sidebar(props: any) {
           <span>Digitalni cjenik</span>
         </Link>
 
-        <Link href="/grupe" onClick={onAction} className={dobiStilGumba('/grupe')}>
+        <Link href={`/grupe?tvrtka_id=${tvrtkaId}`}>
           <FolderIcon className="w-5 h-5" />
           <span>Grupe proizvoda</span>
         </Link>
 
-        <Link href="/postavke" onClick={onAction} className={dobiStilGumba('/postavke')}>
+        <Link href={`/postavke?tvrtka_id=${tvrtkaId}`}>
           <Cog6ToothIcon className="w-5 h-5" />
           <span>Postavke sustava</span>
         </Link>
