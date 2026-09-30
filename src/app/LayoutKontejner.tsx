@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import { Bars3Icon, XMarkIcon, ChartBarIcon } from '@heroicons/react/24/outline';
@@ -10,10 +10,27 @@ export default function LayoutKontejner({
   firma, 
   uloga, 
   imaPodataka = false 
-}: any) {
+}: { 
+  children: React.ReactNode; 
+  firma?: { naziv: string; adresa: string; oib: string }; 
+  uloga?: string | null; 
+  imaPodataka?: boolean 
+}) {
   const pathname = usePathname();
   const [sidebarOtvoren, setSidebarOtvoren] = useState(false);
-  
+  const [isMounted, setIsMounted] = useState(false);
+
+  // OSIGURANJE ZA MOBITELE: Pri svakom prvom učitavanju na klijentu, sidebar MORA biti zatvoren
+  useEffect(() => {
+    setIsMounted(true);
+    setSidebarOtvoren(false);
+  }, []);
+
+  // Automatsko zatvaranje sidebara čim klijent promijeni stranicu/rutu na mobitelu
+  useEffect(() => {
+    setSidebarOtvoren(false);
+  }, [pathname]);
+
   const firmaNaziv = firma?.naziv || 'PriceHub Sustav';
   const firmaAdresa = firma?.adresa || '';
   const firmaOib = firma?.oib || '';
@@ -41,6 +58,7 @@ export default function LayoutKontejner({
           {firmaOib && <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">OIB: {firmaOib}</span>}
         </div>
 
+        {/* Hamburger gumb s ugrađenim toggle-om */}
         <button
           onClick={() => setSidebarOtvoren(!sidebarOtvoren)}
           className="p-2 md:hidden text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-xl transition-colors"
@@ -54,18 +72,24 @@ export default function LayoutKontejner({
         
         {/* BOČNA TRAKA (SIDEBAR) */}
         <aside 
-          className="fixed top-[53px] bottom-0 left-0 z-50 md:z-40 w-64 bg-slate-50 dark:bg-gray-900 border-r border-gray-200/80 dark:border-gray-800/80 transform md:transform-none h-[calc(100vh-53px)] transition-transform duration-300 ease-in-out select-none"
+          className={`
+            fixed top-[53px] bottom-0 left-0 z-50 md:z-40 w-64 bg-slate-50 dark:bg-gray-900 border-r border-gray-200/80 dark:border-gray-800/80
+            transform transition-transform duration-300 ease-in-out select-none h-[calc(100vh-53px)]
+            ${isMounted && sidebarOtvoren ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          `}
         >
-          {/* SADA SVE VARIJABLE BIVAJU SIGURNO PROSLIJEĐENE BEZ KOČNICA */}
           <Sidebar onAction={() => setSidebarOtvoren(false)} uloga={uloga} imaPodataka={imaPodataka} />
         </aside>
 
-        {/* Mobilni zatamnjeni overlay */}
-        {sidebarOtvoren && (
-          <div onClick={() => setSidebarOtvoren(false)} className="fixed inset-0 bg-black/40 z-45 md:hidden backdrop-blur-sm transition-opacity" />
+        {/* Mobilni zatamnjeni overlay - vidljiv samo kad je isMounted i otvoren */}
+        {isMounted && sidebarOtvoren && (
+          <div 
+            onClick={() => setSidebarOtvoren(false)} 
+            className="fixed inset-0 bg-black/40 z-45 md:hidden backdrop-blur-sm transition-opacity" 
+          />
         )}
 
-        {/* DESNI RADNI PROSTOR (MAIN CHILDRREN) */}
+        {/* DESNI RADNI PROSTOR (MAIN CHILDREN) */}
         <main className="flex-1 p-4 md:p-8 max-w-full overflow-x-hidden md:pl-72 bg-slate-50 dark:bg-slate-900 transition-colors">
           {children}
         </main>

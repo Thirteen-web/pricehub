@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   description: 'Sustav za praćenje i kalkulaciju cijena',
 };
 
+// Neprobojna serverska funkcija koja dohvaća sve podatke i broji artikle
 async function dohvatiGlobalneSaaSPodatke() {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -22,18 +23,28 @@ async function dohvatiGlobalneSaaSPodatke() {
       .select('tvrtka_id, uloga')
       .eq('id', user.id);
 
-    const profil = profilData && profilData.length > 0 ? profilData[0] : null;
+    const profil = profilData && profilData.length > 0 ? profilData[0]  : null;
     const tvrtkaId = profil?.tvrtka_id ? Number(profil.tvrtka_id) : 1;
     const uloga = profil?.uloga || 'korisnik';
 
+    // 1. Dohvaćamo podatke o tvrtki
     const { data: tvrtka } = await supabase
       .from('tvrtke')
       .select('naziv, adresa, oib')
       .eq('id', tvrtkaId)
       .single();
 
-    return { tvrtka, uloga };
-  } catch {
+    // 2. SPASONOSNI KORAK: Brzi i lagani upit koji broji ima li tvrtka artikala u bazi
+    const { count } = await supabase
+      .from('artikli')
+      .select('*', { count: 'exact', head: true })
+      .eq('tvrtka_id', tvrtkaId);
+
+    const imaPodataka = count !== null && count > 0;
+
+    return { tvrtka, uloga, tvrtkaId, imaPodataka };
+  } catch (error) {
+    console.warn('Problem na serveru:', error);
     return null;
   }
 }
@@ -52,12 +63,14 @@ export default async function RootLayout({
   };
 
   const ulogaKorisnika = saasPodaci?.uloga || 'korisnik';
+  const imaPodatakaKorisnika = saasPodaci?.imaPodataka || false; // <--- SADA JE TRENUTAČNO I TOČNO IZRAČUNATO!
 
   return (
     <html lang="hr" suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>
-          <LayoutKontejner firma={firma} uloga={ulogaKorisnika}>
+          {/* Šaljemo sve izračunate podatke s vrha izravno u LayoutKontejner */}
+          <LayoutKontejner firma={firma} uloga={ulogaKorisnika} imaPodataka={imaPodatakaKorisnika}>
             {children}
           </LayoutKontejner>
         </Providers>

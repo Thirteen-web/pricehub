@@ -17,7 +17,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { supabase } from '@/utils/supabase';
 
-export default function Sidebar({ onAction, uloga, imaPodataka }: any) {
+// POPRAVAK: Primamo tvrtkaId izravno u parametrima funkcije
+export default function Sidebar({ onAction, uloga, imaPodataka, tvrtkaId }: any) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -35,10 +36,11 @@ export default function Sidebar({ onAction, uloga, imaPodataka }: any) {
     }`;
   };
 
+  if (!mounted) return null;
+
   return (
     <div className="h-full flex flex-col justify-between p-4 pt-14 pb-8 select-none">
       
-      {/* 1. GLAVNA NAVIGACIJA */}
       <nav className="flex-1 space-y-2">
         <Link href="/" onClick={onAction} className={dobiStilGumba('/')}>
           <DocumentTextIcon className="w-5 h-5" />
@@ -55,7 +57,6 @@ export default function Sidebar({ onAction, uloga, imaPodataka }: any) {
           <span>Postavke sustava</span>
         </Link>
 
-        {/* Gumb 4: Superadmin panel - Vidljiv samo adminu */}
         {uloga === 'admin' && (
           <Link href="/admin" onClick={onAction} className={dobiStilGumba('/admin')}>
             <span>👑</span>
@@ -63,10 +64,9 @@ export default function Sidebar({ onAction, uloga, imaPodataka }: any) {
           </Link>
         )}
 
-        {/* --- RAZDJELNIK --- */}
         <div className="my-4 border-t border-gray-100 dark:border-gray-800/60 pt-2" />
 
-        {/* PDF GUMB - Onemogućen ako nema podataka, otvara ispis u novom prozoru */}
+        {/* PDF GUMB - Otvara novi tab i šalje tvrtka_id parametar */}
         {!imaPodataka ? (
           <div className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-400 dark:text-gray-600 opacity-40 cursor-not-allowed select-none">
             <PrinterIcon className="w-5 h-5 text-gray-300 dark:text-gray-700" />
@@ -74,7 +74,7 @@ export default function Sidebar({ onAction, uloga, imaPodataka }: any) {
           </div>
         ) : (
           <a 
-            href="/api/export-pdf-view" 
+            href={`/api/export-pdf?tvrtka_id=${tvrtkaId || 1}`} 
             target="_blank" 
             rel="noopener noreferrer" 
             onClick={onAction}
@@ -85,47 +85,53 @@ export default function Sidebar({ onAction, uloga, imaPodataka }: any) {
           </a>
         )}
 
-        {/* CSV GUMB */}
+         {/* CSV GUMB - Sada ispravno prosljeđuje tvrtka_id parametar na backend */}
         {!imaPodataka ? (
           <div className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-400 dark:text-gray-600 opacity-40 cursor-not-allowed select-none">
             <ArrowDownTrayIcon className="w-5 h-5 text-gray-300 dark:text-gray-700" />
             <span>Izvoz podataka (CSV)</span>
           </div>
         ) : (
-          <Link href="/api/export-csv" onClick={onAction} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all group w-full text-left">
+          <Link 
+            href={`/api/export-csv?tvrtka_id=${tvrtkaId || 1}`} 
+            onClick={onAction} 
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all group w-full text-left"
+          >
             <ArrowDownTrayIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
             <span>Izvoz podataka (CSV)</span>
           </Link>
         )}
 
-        {/* XML GUMB */}
+        {/* XML GUMB - Sada ispravno prosljeđuje tvrtka_id parametar na backend */}
         {!imaPodataka ? (
           <div className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-400 dark:text-gray-600 opacity-40 cursor-not-allowed select-none">
             <CodeBracketIcon className="w-5 h-5 text-gray-300 dark:text-gray-700" />
             <span>Izvoz cjenika (XML)</span>
           </div>
         ) : (
-          <Link href="/export-xml" onClick={onAction} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all group w-full text-left">
+          <Link 
+            href={`/api/export-xml?tvrtka_id=${tvrtkaId || 1}`} 
+            onClick={onAction} 
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all group w-full text-left"
+          >
             <CodeBracketIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
             <span>Izvoz cjenika (XML)</span>
           </Link>
         )}
+
       </nav>
 
-      {/* 2. SPUŠTENI DIO: UPRAVLJANJE (Tema i Odjava) */}
       <div className="space-y-2 pt-4 border-t border-gray-100 dark:border-gray-800">
-        {mounted && (
-          <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all w-full text-left"
-          >
-            {theme === 'dark' ? (
-              <><SunIcon className="w-5 h-5 text-amber-500" /><span>Svijetli način</span></>
-            ) : (
-              <><MoonIcon className="w-5 h-5 text-blue-600" /><span>Tamni način</span></>
-            )}
-          </button>
-        )}
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all w-full text-left"
+        >
+          {theme === 'dark' ? (
+            <><SunIcon className="w-5 h-5 text-amber-500" /><span>Svijetli način</span></>
+          ) : (
+            <><MoonIcon className="w-5 h-5 text-blue-600" /><span>Tamni način</span></>
+          )}
+        </button>
 
         <button
           onClick={async () => {

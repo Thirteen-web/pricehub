@@ -1,5 +1,6 @@
 import { supabase } from '@/utils/supabase';
 import CjenikPrikaz from './CjenikPrikaz'; 
+import LayoutKontejner from './LayoutKontejner';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,9 +55,9 @@ export default async function Home() {
     console.warn('Problem sa sesijom, koristim fallback tvrtku 1:', authError);
   }
 
-  const { artikli, grupe, firma } = await getCjenikPodaci(trenutnaTvrtkaId);
+   const { artikli, grupe, firma } = await getCjenikPodaci(trenutnaTvrtkaId);
 
-  // Uočite: Ovdje je maknut <LayoutKontejner> omotač jer ga već drži krovni layout.tsx!
+  // Čisti i stabilni povrat - LayoutKontejner je maknut jer se već nalazi u krovnom layout.tsx!
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6">
       <CjenikPrikaz pocetniArtikli={artikli} grupe={grupe} firma={firma} tvrtkaId={trenutnaTvrtkaId} />
