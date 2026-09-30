@@ -19,41 +19,36 @@ export default function PostavkePage() {
   useEffect(() => {
     async function ucitajPostavke() {
       try {
-        // 1. Provjera ulogiranog korisnika na klijentu (preglednik vidi kolačić!)
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          window.location.href = '/login';
-          return;
-        }
+        
+        if (user) {
+          const { data: profilData } = await supabase
+            .from('korisnici_profili')
+            .select('tvrtka_id')
+            .eq('id', user.id);
 
-        // 2. Dohvat tvrtka_id iz profila korisnika
-        const { data: profilData } = await supabase
-          .from('korisnici_profili')
-          .select('tvrtka_id')
-          .eq('id', user.id);
+          let tId = 1;
+          if (profilData && profilData.length > 0) {
+            tId = Number(profilData[0].tvrtka_id);
+          }
 
-        let tId = 1;
-        if (profilData && profilData.length > 0) {
-          tId = Number(profilData[0].tvrtka_id);
-        }
+          const { data: tvrtkaData } = await supabase
+            .from('tvrtke')
+            .select('naziv, adresa, oib, napomena')
+            .eq('id', tId);
 
-        // 3. Dohvat memoranduma i napomene izravno iz tablice 'tvrtke'
-        const { data: tvrtkaData } = await supabase
-          .from('tvrtke')
-          .select('naziv, adresa, oib, napomena')
-          .eq('id', tId);
-
-        if (tvrtkaData && tvrtkaData.length > 0) {
-          setPostavke({
-            tvrtka_id: tId,
-            firma_naziv: tvrtkaData[0].naziv || '',
-            firma_adresa: tvrtkaData[0].adresa || '',
-            firma_oib: tvrtkaData[0].oib || '',
-            zakonska_napomena: tvrtkaData[0].napomena || 'Cijene su iskazane u eurima s uključenim porezom.'
-          });
+          if (tvrtkaData && tvrtkaData.length > 0) {
+            setPostavke({
+              tvrtka_id: tId,
+              firma_naziv: tvrtkaData[0].naziv || '',
+              firma_adresa: tvrtkaData[0].adresa || '',
+              firma_oib: tvrtkaData[0].oib || '',
+              zakonska_napomena: tvrtkaData[0].napomena || 'Cijene su iskazane u eurima s uključenim porezom.'
+            });
+          }
         }
       } catch (error) {
-        console.error('Greška pri učitavanju postavki na klijentu:', error);
+        console.error('Greška pri učitavanju postavki:', error);
       } finally {
         setLoading(false);
       }
