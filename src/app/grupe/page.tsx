@@ -14,18 +14,19 @@ export default function GrupePage() {
   useEffect(() => {
     async function ucitajPodatke() {
       try {
-        // Čitamo ulogiranog korisnika samo radi dohvata njegovog ID-ja za profil
         const { data: { user } } = await supabase.auth.getUser();
         
         if (user) {
-          // Dohvat profila korisnika kako bismo saznali ID njegove tvrtke
-          const { data: profil } = await supabase
+          // SIGURAN DOHVAT PROFILA BEZ .single() KOČNICE
+          const { data: profilData } = await supabase
             .from('korisnici_profili')
             .select('tvrtka_id')
-            .eq('id', user.id)
-            .single();
+            .eq('id', user.id);
 
-          const tvrtkaId = profil?.tvrtka_id ? Number(profil.tvrtka_id) : 1;
+          let tvrtkaId = 1;
+          if (profilData && profilData.length > 0) {
+            tvrtkaId = Number(profilData[0].tvrtka_id);
+          }
           setTrenutnaTvrtkaId(tvrtkaId);
 
           // Dohvaćanje grupa izolirano za tu tvrtku

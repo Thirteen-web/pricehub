@@ -22,6 +22,7 @@ export default function PostavkePage() {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (user) {
+          // SIGURAN DOHVAT PROFILA BEZ .single()
           const { data: profilData } = await supabase
             .from('korisnici_profili')
             .select('tvrtka_id')
@@ -32,6 +33,7 @@ export default function PostavkePage() {
             tId = Number(profilData[0].tvrtka_id);
           }
 
+          // SIGURAN DOHVAT TVRTKE BEZ .single()
           const { data: tvrtkaData } = await supabase
             .from('tvrtke')
             .select('naziv, adresa, oib, napomena')
