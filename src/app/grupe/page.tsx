@@ -1,45 +1,66 @@
+'use client';
+
+export const dynamic = 'force-dynamic';
+
+import React, { useEffect, useState } from 'react';
 import { supabase } from '@/utils/supabase';
-import GrupeUpravljanje from './GrupeUpravljanje'; // <--- TOČAN UVOZ KOMPONENTE ZA UPRAVLJANJE GRUPAMA
+import GrupeUpravljanje from './GrupeUpravljanje';
 
-// Funkcija koja na poslužitelju dohvaća grupe izolirano za tvrtku
-async function getGrupePodaci(tvrtkaId: number) {
-  const { data: grupe } = await supabase
-    .from('grupe')
-    .select('*')
-    .eq('tvrtka_id', tvrtkaId) // Multi-tenant izolacija podataka
-    .order('naziv', { ascending: true });
+export default function GrupePage() {
+  const [loading, setLoading] = useState(true);
+  const [grupe, setGrupe] = useState<any[]>([]);
+  const [trenutnaTvrtkaId, setTrenutnaTvrtkaId] = useState<number>(1);
 
-  return (grupe as any[]) || [];
-}
+  useEffect(() => {
+    async function ucitajPodatke() {
+      try {
+        // 1. Provjera ulogiranog korisnika na klijentu (preglednik vidi kolačić!)
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          window.location.href = '/login';
+          return;
+        }
 
-// Glavna server komponenta za stranicu /grupe
-export default async function GrupePage() {
-  // 1. Provjera trenutno ulogiranog korisnika na poslužitelju
-  const { data: { user } } = await supabase.auth.getUser();
+        // 2. Dohvat profila korisnika kako bismo saznali ID njegove tvrtke
+        const { data: profil } = await supabase
+          .from('korisnici_profili')
+          .select('tvrtka_id')
+          .eq('id', user.id)
+          .single();
 
-  // Ako korisnik nije ulogiran, preusmjeravamo ga na login ekran
-  //  if (!user) {
-  //    const { redirect } = await import('next/navigation');
-   //   redirect('/login');
-  //  }
+        const tvrtkaId = profil?.tvrtka_id ? Number(profil.tvrtka_id) : 1;
+        setTrenutnaTvrtkaId(tvrtkaId);
 
-  // 2. Dohvat profila korisnika kako bismo saznali ID njegove tvrtke
-  const { data: profil } = await supabase
-    .from('korisnici_profili')
-    .select('tvrtka_id')
-    .eq('id', user!.id)
-    .single();
+        // 3. Dohvaćanje grupa izolirano za tu tvrtku
+        const { data: grupeData } = await supabase
+          .from('grupe')
+          .select('*')
+          .eq('tvrtka_id', tvrtkaId)
+          .order('naziv', { ascending: true });
 
-  // Ako profil nema tvrtku u bazi, koristimo ID 1 kao fallback
-  const trenutnaTvrtkaId = profil?.tvrtka_id ? Number(profil.tvrtka_id) : 1;
+        setGrupe(grupeData || []);
+      } catch (error) {
+        console.error('Greška pri učitavanju grupa na klijentu:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  // 3. Dohvaćanje grupa za ulogiranu tvrtku
-  const grupe = await getGrupePodaci(trenutnaTvrtkaId);
+    ucitajPodatke();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="p-8 text-sm font-semibold text-gray-400 select-none animate-pulse">
+        Učitavanje grupa proizvoda...
+      </div>
+    );
+  }
 
   return (
     <main className="w-full pt-2">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* POKREĆEMO UPRAVLJANJE GRUPAMA I ŠALJEMO MU PODATKE I TENANT ID */}
+        {/* Isctavamo tvoju postojeću klijentsku komponentu s čistim podacima */}
         <GrupeUpravljanje pocetneGrupe={grupe} tvrtkaId={trenutnaTvrtkaId} />
       </div>
     </main>
