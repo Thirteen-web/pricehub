@@ -100,10 +100,8 @@ export default function CjenikPrikaz({ pocetniArtikli, grupe, firma, tvrtkaId  }
   const datumZadnjePromjenePrikaz = dobijDatumZadnjePromjene();
 
   return (
-           <div className="space-y-6">
-      {/* GLAVNI GUMB ZA NOVI ARTIKL - SADA DOMINIRA SAMOSTALNO KAO NA SLICI */}
+      <div className="space-y-6">
       
-
       {/* 2. POSEBAN RED ZA GLAVNI GUMB: Točno kao na snimci zaslona */}
       <div className="flex justify-start items-center pt-2">
         <button
