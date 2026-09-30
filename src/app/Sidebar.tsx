@@ -34,13 +34,16 @@ export default function Sidebar(props: any) {
     setMounted(true);
   }, []);
 
-  const dobiStilGumba = (ruta: string) => {
-    const aktivan = pathname === ruta;
-    return `flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all select-none ${
-      aktivan 
-        ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold shadow-sm' 
-        : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 font-semibold'
-    }`;
+ // Pomoćna funkcija koja provjerava aktivnu rutu bez obzira na URL parametre (?tvrtka_id=...)
+  const dobiStilGumba = (ciljanaPutanja: string) => {
+    // Čistimo pathname od eventualnih parametara radi sigurne usporedbe
+    const cistaTrenutnaPutanja = pathname.split('?')[0];
+    const jeAktivna = cistaTrenutnaPutanja === ciljanaPutanja;
+
+    if (jeAktivna) {
+      return "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 transition-all group w-full text-left";
+    }
+    return "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all group w-full text-left";
   };
 
   if (!mounted) return null;
