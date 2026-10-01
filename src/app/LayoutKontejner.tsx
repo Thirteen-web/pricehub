@@ -72,12 +72,12 @@ export default function LayoutKontejner({
       {/* GLAVNI OKVIR: SIDEBAR + RADNI PROSTOR */}
       <div className="flex flex-1 flex-col md:flex-row min-w-0 w-full relative">
         
-        {/* BOČNA TRAKA (SIDEBAR) */}
+      {/* BOČNA TRAKA (SIDEBAR) */}
         <aside 
           className={`
-            fixed top-[53px] bottom-0 left-0 z-50 md:z-40 w-64 bg-slate-50 dark:bg-gray-900 border-r border-gray-200/80 dark:border-gray-800/80
-            transform transition-transform duration-300 ease-in-out select-none h-[calc(100vh-53px)]
-            ${isMounted && sidebarOtvoren ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            fixed top-0 md:top-14 bottom-0 left-0 z-50 md:z-40 w-64 bg-white dark:bg-gray-950 border-r border-gray-200/80 dark:border-gray-800/80
+            transform transition-transform duration-300 ease-in-out select-none h-full md:h-[calc(100vh-56px)] overflow-y-auto
+            ${isMounted && sidebarOtvoren ? 'translate-x-0 shadow-2xl md:shadow-none' : '-translate-x-full md:translate-x-0'}
           `}
         >
           {/* SADA JE tvrtkaId 100% ISPRAVAN I PREPOZNAT! */}

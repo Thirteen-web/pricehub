@@ -45,7 +45,7 @@ export default function Sidebar(props: any) {
 
   if (!mounted) return null;
   return (
-    <div className="h-full flex flex-col justify-between p-4 pt-14 pb-8 select-none bg-white dark:bg-gray-950">
+       <div className="h-full flex flex-col justify-between p-4 pt-16 pb-24 overflow-y-auto select-none bg-white dark:bg-gray-950">
       
       <nav className="flex-1 space-y-2">
         {/* 1. DIGITALNI CJENIK */}
