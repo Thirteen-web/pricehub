@@ -87,39 +87,26 @@ export default function Sidebar(props: any) {
           <span>Ispis cjenika (PDF)</span>
         </a>
 
-        {/* 5. CSV IZVOZ */}
-        {!imaPodataka ? (
-          <div className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-400 dark:text-gray-600 opacity-40 cursor-not-allowed select-none">
-            <ArrowDownTrayIcon className="w-5 h-5 text-gray-300 dark:text-gray-700" />
-            <span>Izvoz podataka (CSV)</span>
-          </div>
-        ) : (
-          <Link 
-            href={`/api/export-csv?tvrtka_id=${tvrtkaId}`}
-            onClick={onAction} 
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all group w-full text-left"
-          >
-            <ArrowDownTrayIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
-            <span>Izvoz podataka (CSV)</span>
-          </Link>
-        )}
+         {/* CSV GUMB - Uvijek aktivan, sinkroniziran s PDF logikom */}
+        <Link 
+          href={`/api/export-csv?tvrtka_id=${tvrtkaId}`}
+          onClick={onAction} 
+          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all group w-full text-left"
+        >
+          <ArrowDownTrayIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+          <span>Izvoz podataka (CSV)</span>
+        </Link>
 
-        {/* 6. XML IZVOZ */}
-        {!imaPodataka ? (
-          <div className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-400 dark:text-gray-600 opacity-40 cursor-not-allowed select-none">
-            <CodeBracketIcon className="w-5 h-5 text-gray-300 dark:text-gray-700" />
-            <span>Izvoz cjenika (XML)</span>
-          </div>
-        ) : (
-          <Link 
-            href={`/api/export-xml?tvrtka_id=${tvrtkaId}`} 
-            onClick={onAction} 
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all group w-full text-left"
-          >
-            <CodeBracketIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
-            <span>Izvoz cjenika (XML)</span>
-          </Link>
-        )}
+          {/* XML GUMB - Uvijek aktivan, sinkroniziran s PDF logikom */}
+        <Link 
+          href={`/api/export-xml?tvrtka_id=${tvrtkaId}`} 
+          onClick={onAction} 
+          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all group w-full text-left"
+        >
+          <CodeBracketIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+          <span>Izvoz cjenika (XML)</span>
+        </Link>
+        
       </nav>
 
       {/* DONJA GRUPA: MOON / SUN & LOGOUT */}
